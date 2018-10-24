@@ -122,7 +122,39 @@ def users_active(data, index):
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
+	
+def users_registered_active(data,index):
+    user_registered=data[data['contributor_name']!='Anonymous']
+    monthly_data_registered=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
+    series = monthly_data_registered.apply(lambda x: len(x.contributor_id.unique()))
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
 
+def users_anonymous_active(data,index):
+    user_registered=data[data['contributor_name']=='Anonymous']
+    monthly_data_anonymous=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
+    series = monthly_data_anonymous.apply(lambda x: len(x.contributor_id.unique()))
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+def 5aportacionesMesNofunciona(data,index):
+    df = pd.read_csv('cocktails.csv', delimiter=';', quotechar='|', index_col='revision_id')
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    users_registered = df[df['contributor_name']!='Anonymous']
+    monthly_data_registered = users_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
+    series= monthly_data_registered.apply(lambda x:(x.groupby(['contributor_id']).size()>4))
+    aux = monthly_data_registered['contributor_id'].apply(pd.value_counts)
+    aux2=aux[aux>4]
+
+def users_active(data,index):
+    user_registered=data[data['contributor_name']=='Anonymous']
+    monthly_data_anonymous=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
+    series = monthly_data_anonymous.apply(lambda x: len(x.contributor_id))
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
 
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
