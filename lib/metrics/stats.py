@@ -115,6 +115,17 @@ def edits_user_talk(data, index):
 
 # Users
 
+def newCommers(data, index):
+    data['duplicate'] = data['contributor_id'].duplicated()
+    data=data[data['duplicate']==False]
+    series = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+    return series
+
+def edits_per_month(data, index):
+    monthly = data.groupby(pd.Grouper(key='timestamp', freq = 'MS'))
+    series = monthly.apply(lambda x: len(x.groupby(['contributor_id']).size().where(lambda y: y>4).dropna()))
+    return series
+
 
 def users_active(data, index):
     monthly_data = data.groupby(pd.Grouper(key='timestamp', freq='MS'))
@@ -138,15 +149,6 @@ def users_anonymous_active(data,index):
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
-
-def 5aportacionesMesNofunciona(data,index):
-    df = pd.read_csv('cocktails.csv', delimiter=';', quotechar='|', index_col='revision_id')
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    users_registered = df[df['contributor_name']!='Anonymous']
-    monthly_data_registered = users_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    series= monthly_data_registered.apply(lambda x:(x.groupby(['contributor_id']).size()>4))
-    aux = monthly_data_registered['contributor_id'].apply(pd.value_counts)
-    aux2=aux[aux>4]
 
 def users_active(data,index):
     user_registered=data[data['contributor_name']=='Anonymous']

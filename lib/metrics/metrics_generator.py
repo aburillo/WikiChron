@@ -32,6 +32,8 @@ def generate_metrics():
     metrics.append(Metric('edits_main_content_accum', 'Total edits in articles', MetricCategory.EDITIONS, stats.edits_main_content_accum, 'Editions to articles accumulated at every month'))
 
     # Users
+    metrics.append(Metric('newcommers', 'New commers', MetricCategory.USERS, stats.newCommers, ''))
+    metrics.append(Metric('users_new', 'Acive users>5', MetricCategory.USERS, stats.edits_per_month, ''))
     metrics.append(Metric('users_new', 'New users', MetricCategory.USERS, stats.users_new, 'Users who have made at least one edition grouped by the month they did their first edit.'))
     metrics.append(Metric('users_active_registered', 'Active registered users', MetricCategory.USERS, stats.users_registered_active, 'New users registration per month who have made at least one edition.'))
     metrics.append(Metric('users_active_anonymous', 'Active anonymous users', MetricCategory.USERS, stats.users_anonymous_active, 'New users registration per month who have made at least one edition.'))
