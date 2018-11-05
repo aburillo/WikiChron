@@ -121,10 +121,29 @@ def newCommers(data, index):
     series = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
     return series
 
-def edits_per_month(data, index):
+def edits_per_month_greather_than_4(data, index):
     monthly = data.groupby(pd.Grouper(key='timestamp', freq = 'MS'))
     series = monthly.apply(lambda x: len(x.groupby(['contributor_id']).size().where(lambda y: y>4).dropna()))
     return series
+
+def userReincident(data,index)
+    # we want to calculate, per each month, how many reincident users became reincident in that month
+    #erase non-reincident users
+    data['test_duplicated'] = data['contributor_id'].duplicated()
+    users_reincident = data[data['test_duplicated'] == True]
+    #users_reincident.drop('test_duplicated', 1)
+    #determine in which month each user performed their second edition-> can be the same month as the first one
+    #1) get number of editions per month for every user
+    users_reincident = users_reincident.groupby(['contributor_id', pd.Grouper(key='timestamp', freq='MS')]).size().to_frame('edits_count').reset_index()
+    #2) get the accum. number of edits per user each month
+    users_reincident['accum_edit_count'] = users_reincident.groupby('contributor_id')['edits_count'].apply(lambda x: x.cumsum())
+    #3) drop rows in which the accum_edit_count is less than 2
+    users_reincident = users_reincident[users_reincident['accum_edit_count'] > 1]
+    #4) now, we just want the first month in which the user became reincident: (drop_duplicates drops all rows but first, so as it is sorted, for sure we will keep the first month)
+    users_reincident = users_reincident.drop_duplicates('contributor_id')
+    #5) group by timestamp and get the count of reincident users per month
+    users_reincident_monthly = users_reincident.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+    return users_reincident_monthly
 
 
 def users_active(data, index):
