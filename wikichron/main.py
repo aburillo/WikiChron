@@ -16,6 +16,7 @@ import time
 from warnings import warn
 import json
 import functools
+from urllib.parse import urlencode
 
 import dash
 import dash_core_components as dcc
@@ -23,17 +24,25 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output, State
+import grasia_dash_components as gdc
+import sd_material_ui
 
 # Local imports:
 import lib.interface as lib
 from cache import cache
 
 global debug
-debug = 'DEBUG' in os.environ
+debug = True if os.environ.get('FLASK_ENV') == 'development' else False
 
 # get csv data location (data/ by default)
 global data_dir;
 data_dir = os.getenv('WIKICHRON_DATA_DIR', 'data')
+
+
+
+def extract_metrics_objs_from_metrics_codes(metric_codes):
+    metrics = [ lib.metrics_dict[metric] for metric in metric_codes ]
+    return metrics
 
 
 @cache.memoize(timeout=3600)
@@ -57,7 +66,7 @@ def get_dataframe_from_csv(csv):
     print('!!Loaded csv for ' + csv)
     time_end_loading_one_csv = time.perf_counter() - time_start_loading_one_csv
     print(' * [Timing] Loading {} : {} seconds'.format(csv, time_end_loading_one_csv) )
-
+    df.index.name = csv
     return df
 
 
@@ -69,7 +78,6 @@ def clean_up_bot_activity(df, wiki):
         return df
 
 
-@cache.memoize()
 def compute_data(dataframes, metrics):
     """ Load analyzed data by every metric for every dataframe and store it in data[] """
 
@@ -89,6 +97,8 @@ def compute_data(dataframes, metrics):
     return wiki_by_metrics
 
 
+# returns data[metric][wiki]
+@cache.memoize()
 def load_and_compute_data(wikis, metrics):
 
     # load data from csvs:
@@ -108,7 +118,7 @@ def load_and_compute_data(wikis, metrics):
     print(' * [Timing] Calculations : {} seconds'.format(time_end_calculations) )
     return data
 
-
+@cache.memoize()
 def generate_longest_time_axis(list_of_selected_wikis, relative_time):
     """ Generate time axis index of the oldest wiki """
 
@@ -150,10 +160,141 @@ def generate_graphs(data, metrics, wikis, relative_time):
 
 
 
-def generate_main_content(wikis_arg, metrics_arg, relative_time_arg):
+def generate_main_content(wikis_arg, metrics_arg, relative_time_arg,
+                            query_string, url_host):
 
-    #~ def main_header():
-    #~ def select_wikis_and_metrics_control(wikis_dropdown_options, metrics_dropdown_options):
+    def main_header():
+        href_download_button = '/download/{}'.format(query_string)
+        return (html.Div(id='header',
+                className='container',
+                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between'},
+                children=[
+                    html.Span(
+                        html.Img(src='/assets/logo_wikichron.svg'),
+                        id='tool-title'),
+                    html.Div([
+                        html.A(
+                            html.Img(src='/assets/share.svg'),
+                            id='share-button',
+                            className='icon',
+                            title='Share current selection'
+                        ),
+                        html.A(
+                            html.Img(src='/assets/cloud_download.svg'),
+                            href=href_download_button,
+                            id='download-button',
+                            target='_blank',
+                            className='icon',
+                            title='Download data'
+                        ),
+                        html.A(
+                            html.Img(src='/assets/documentation.svg'),
+                            href='https://github.com/Grasia/WikiChron/wiki/',
+                            target='_blank',
+                            className='icon',
+                            title='Documentation'
+                        ),
+                        html.A(
+                            html.Img(src='/assets/ico-github.svg'),
+                            href='https://github.com/Grasia/WikiChron',
+                            target='_blank',
+                            className='icon',
+                            title='Github repo'
+                        ),
+                    ],
+                    id='icons-bar')
+            ])
+        );
+
+
+    def share_modal(share_link, download_link):
+        return html.Div([
+            sd_material_ui.Dialog(
+                html.Div(children=[
+                    html.H3('Share WikiChron with others or save your work!'),
+                    html.P([
+                      html.Strong('Link with your current selection:'),
+                      html.Div(className='share-modal-link-and-button-cn', children=[
+                        dcc.Input(value=share_link, id='share-link-input', readOnly=True, className='share-modal-input-cn', type='url'),
+                        html.Div(className='tooltip', children=[
+                          html.Button('Copy!', id='share-link', className='share-modal-button-cn'),
+                        ])
+                      ]),
+                    ]),
+                    html.P([
+                      html.Strong('Link to download the data of your current selection:'),
+                      html.Div(className='share-modal-link-and-button-cn', children=[
+                        dcc.Input(value=download_link, id='share-download-input', readOnly=True, className='share-modal-input-cn', type='url'),
+                        html.Div(className='tooltip', children=[
+                          html.Button('Copy!', id='share-download', className='share-modal-button-cn'),
+                        ])
+                      ]),
+
+                      html.Div([
+                        html.Span('You can find more info about working with the data downloaded in '),
+                        html.A('this page of our wiki.', href='https://github.com/Grasia/WikiChron/wiki/Downloading-and-working-with-the-data')
+                        ],
+                        className='share-modal-paragraph-info-cn'
+                      )
+                    ]),
+                    gdc.Import(src='js/main.share_modal.js')
+                    ],
+                    id='share-dialog-inner-div'
+                ),
+                id='share-dialog',
+                modal=False,
+                open=False
+            )
+        ])
+
+
+    def select_wikis_and_metrics_control(wikis_dropdown_options, metrics_dropdown_options):
+        return (html.Div(id='wikis-and-metrics-control',
+                        className='selector',
+                        children=[
+                            html.Div(id='first-row',
+                                className='row',
+                                style={'marginBottom': '15px'},
+                                children=[
+                                    html.Strong(
+                                    'You are comparing:',
+                                    className='three columns'
+                                    ),
+
+                                    html.Div(id='wikis-selection-div',
+                                        children=[
+                                            html.Span('Wikis:', className='two columns'),
+
+                                            dcc.Dropdown(
+                                                id='wikis-selection-dropdown',
+                                                className='seven columns',
+                                                options=wikis_dropdown_options,
+                                                multi=True,
+                                                searchable=False,
+                                                value=[ option['value'] for option in wikis_dropdown_options ]
+                                            ),
+                                        ]),
+                                ]
+                            ),
+
+                            html.Div(id='metrics-selection-div',
+                                className='row',
+                                children=[
+                                    html.P(className='three columns'),
+                                    html.Span('Metrics:', className='two columns', style={'marginLeft': '0'}),
+
+                                    dcc.Dropdown(
+                                        id='metrics-selection-dropdown',
+                                        className='seven columns',
+                                        options=metrics_dropdown_options,
+                                        multi=True,
+                                        searchable=False,
+                                        value=[ option['value'] for option in metrics_dropdown_options ]
+                                    ),
+                                 ]),
+                            ],
+                        )
+                );
 
     def select_time_axis_control(init_relative_time):
         return (html.Div([
@@ -209,7 +350,8 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg):
     metrics = metrics_arg;
     relative_time = relative_time_arg;
 
-    print ('Generating main...')
+    if debug:
+        print ('Generating main...')
 
     wikis_dropdown_options = []
     for index, wiki in enumerate(wikis):
@@ -227,83 +369,14 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg):
         style={'width': '100%'},
         children=[
 
-            #~ main_header()
-            html.Div(id='header',
-                className='container',
-                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between'},
-                children=[
-                    html.Span(
-                        html.Img(src='assets/logo_wikichron.svg'),
-                        id='tool-title'),
-                    html.Div([
-                        html.A(
-                            html.Img(src='assets/documentation.svg'),
-                            href='https://github.com/Grasia/WikiChron/wiki/',
-                            target='_blank',
-                            className='icon',
-                            title='Documentation'
-                        ),
-                        html.A(
-                            html.Img(src='assets/ico-github.svg'),
-                            href='https://github.com/Grasia/WikiChron',
-                            target='_blank',
-                            className='icon',
-                            title='Github repo'
-                        ),
-                    ],
-                    id='icons-bar')
-            ]),
+            main_header(),
+
             html.Hr(),
 
             html.Div(id='selection-div',
                 className='container',
                 children=[
-                    #~ select_wikis_and_metrics_control(wikis_dropdown_options, metrics_dropdown_options),
-                    html.Div(id='wikis-and-metrics-control',
-                        className='selector',
-                        children=[
-                            html.Div(id='first-row',
-                                className='row',
-                                style={'marginBottom': '15px'},
-                                children=[
-                                    html.Strong(
-                                    'You are comparing:',
-                                    className='three columns'
-                                    ),
-
-                                    html.Div(id='wikis-selection-div',
-                                        children=[
-                                            html.Span('Wikis:', className='two columns'),
-
-                                            dcc.Dropdown(
-                                                id='wikis-selection-dropdown',
-                                                className='seven columns',
-                                                options=wikis_dropdown_options,
-                                                multi=True,
-                                                searchable=False,
-                                                value=[ option['value'] for option in wikis_dropdown_options ]
-                                            ),
-                                        ]),
-                                ]
-                            ),
-
-                            html.Div(id='metrics-selection-div',
-                                className='row',
-                                children=[
-                                    html.P(className='three columns'),
-                                    html.Span('Metrics:', className='two columns', style={'marginLeft': '0'}),
-
-                                    dcc.Dropdown(
-                                        id='metrics-selection-dropdown',
-                                        className='seven columns',
-                                        options=metrics_dropdown_options,
-                                        multi=True,
-                                        searchable=False,
-                                        value=[ option['value'] for option in metrics_dropdown_options ]
-                                    ),
-                                 ]),
-                            ],
-                        ),
+                    select_wikis_and_metrics_control(wikis_dropdown_options, metrics_dropdown_options),
                     select_time_axis_control('relative' if relative_time else 'absolute')
                 ]
              ),
@@ -314,8 +387,11 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg):
 
             html.Div(id='graphs'),
 
+            share_modal('{}/app/{}'.format(url_host, query_string),
+                        '{}/download/{}'.format(url_host, query_string)),
+
             html.Div(id='initial-selection', style={'display': 'none'}, children=args_selection),
-            html.Div(id='intermediate-data', style={'display': 'none'}),
+            html.Div(id='signal-data', style={'display': 'none'}),
             html.Div(id='time-axis', style={'display': 'none'}),
             html.Div(id='ready', style={'display': 'none'})
         ]
@@ -324,13 +400,14 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg):
 def bind_callbacks(app):
 
     @app.callback(
-        Output('intermediate-data', 'children'),
+        Output('signal-data', 'children'),
         [Input('initial-selection', 'children')]
-        )
+    )
     def start_main(selection_json):
+        # get wikis x metrics selection
         selection = json.loads(selection_json)
         wikis = selection['wikis']
-        metrics = [ lib.metrics_dict[metric] for metric in selection['metrics'] ]
+        metrics = extract_metrics_objs_from_metrics_codes(selection['metrics'])
 
         metric_names = [metric.text for metric in metrics]
         wikis_names = [wiki['name'] for wiki in wikis]
@@ -339,26 +416,33 @@ def bind_callbacks(app):
         print( '\tof the following metrics: {}'.format( metric_names ))
         data = load_and_compute_data(wikis, metrics)
         print('<-- Done retrieving and computing data!')
-        return json.dumps(data, default=lambda ts: ts.to_json(force_ascii=False))
+        return True
 
 
     @app.callback(
         Output('time-axis', 'children'),
-        [Input('intermediate-data', 'children'),
+        [Input('signal-data', 'children'),
         Input('time-axis-selection', 'value'),
-        ]
+        ],
+        [State('initial-selection', 'children'),]
     )
-    def time_axis(data_json, selected_timeaxis):
-        if not data_json:
-            return;
+    def time_axis(signal, selected_timeaxis, selection_json):
+        if not signal or not selected_timeaxis or not selection_json:
+            return '';
+
+        relative_time = selected_timeaxis == 'relative'
+
+        # get wikis x metrics selection
+        selection = json.loads(selection_json)
+        wikis = selection['wikis']
+        metrics = extract_metrics_objs_from_metrics_codes(selection['metrics'])
+
+        data = load_and_compute_data(wikis, metrics)
 
         # get time axis of the oldest one and use it as base numbers for the slider:
-        data = json.loads(data_json)
-        data_wikis_with_first_metric = [ pd.read_json(wiki_time_series, typ="series") for wiki_time_series in data[0] ]
-        time_axis_index = generate_longest_time_axis(data_wikis_with_first_metric, selected_timeaxis == 'relative')
-        #~ time_axis =
-        #~ import pdb; pdb.set_trace()
-        relative_time = selected_timeaxis == 'relative'
+        time_axis_index = generate_longest_time_axis([ wiki for wiki in data[0] ],
+                                                    relative_time)
+
         if relative_time:
             return json.dumps(time_axis_index)
         else:
@@ -371,7 +455,7 @@ def bind_callbacks(app):
         Input('metrics-selection-dropdown', 'value'),
         Input('dates-slider', 'value'),
         Input('time-axis-selection', 'value'),
-        Input('intermediate-data', 'children'),
+        Input('signal-data', 'children'),
         Input('time-axis', 'children')],
     )
     def ready_to_plot_graphs(*args):
@@ -380,7 +464,8 @@ def bind_callbacks(app):
             #~ print('not ready!')
             return None
         else:
-            print('Ready to plot graphs!')
+            if debug:
+                print('Ready to plot graphs!')
             return 'ready'
 
 
@@ -391,27 +476,25 @@ def bind_callbacks(app):
         State('metrics-selection-dropdown', 'value'),
         State('dates-slider', 'value'),
         State('time-axis-selection', 'value'),
-        State('intermediate-data', 'children'),
         State('initial-selection', 'children'),
         State('time-axis', 'children')]
     )
     def update_graphs(ready,
             selected_wikis, selected_metrics, selected_timerange,
-            selected_timeaxis, data_json, selection_json, time_axis_json):
+            selected_timeaxis, selection_json, time_axis_json):
 
         if not ready: # waiting for all parameters to be ready
             return;
 
+        # get wikis x metrics selection
         selection = json.loads(selection_json)
         wikis = selection['wikis']
-        metrics = [ lib.metrics_dict[metric] for metric in selection['metrics'] ]
+        metrics = extract_metrics_objs_from_metrics_codes(selection['metrics'])
 
-        data = json.loads(data_json)
-        for i in range(len(data)):
-            for j in range(len(data[i])):
-                data[i][j] = pd.read_json(data[i][j], typ="series")
+        data = load_and_compute_data(wikis, metrics)
 
-        print('Updating graphs. Selection: [{}, {}, {}, {}]'.format(selected_wikis, selected_metrics, selected_timerange, selected_timeaxis))
+        if debug:
+            print('Updating graphs. Selection: [{}, {}, {}, {}]'.format(selected_wikis, selected_metrics, selected_timerange, selected_timeaxis))
 
         relative_time = selected_timeaxis == 'relative'
 
@@ -560,7 +643,7 @@ def bind_callbacks(app):
         slider_selection -- Selection of the Range Slider.
         """
 
-        if not slider_selection:
+        if not slider_selection or not time_axis_json:
             return;
 
         relative_time = selected_timeaxis == 'relative'
@@ -578,6 +661,34 @@ def bind_callbacks(app):
             new_timerange[1] = time_axis[slider_selection[1]].strftime('%b %Y')
             return('From {} to {} '.format(new_timerange[0], new_timerange[1]))
 
+
+    @app.callback(
+        Output('share-dialog', 'open'),
+        [Input('share-button', 'n_clicks')],
+        [State('share-dialog', 'open')]
+    )
+    def show_share_modal(n_clicks: int, open_state: bool):
+        if not n_clicks: # modal init closed
+            return False
+        elif n_clicks > 0 and not open_state: # opens if we click and `open` state is not open
+            return True
+        else: # otherwise, leave it closed.
+            return False
+
+
+    # Play with this in case we want to download only the being shown current selection
+    # instead of the generate_main_content() selection
+    #@app.callback(
+        #Output('download-button', 'href'),
+        #[Input('current-selection-wikis', 'children')], -> Coming from Dropdowns
+        #[Input('current-selection-metrics', 'children')], -> Coming from Dropdowns
+    #)
+    #def set_href_for_download_button(selection_json):
+        #selection = json.loads(selection_json)
+        #print(selection)
+        #query_str = urlencode(selection,  doseq=True)
+        #href = '/download/?' + query_str;
+        #return href
 
     return # bind_callbacks
 
