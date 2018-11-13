@@ -61,7 +61,7 @@ def pages_main_accum(data, index):
 
 
 def pages_edited(data, index):
-    monthly_data = data.groupby([pd.Grouper(key='timestamp', freq='MS')])
+    month_data = data.groupby([pd.Grouper(key='timestamp', freq='MS')])
     series = monthly_data.apply(lambda x: len(x.page_id.unique()))
     if index is not None:
         series = series.reindex(index, fill_value=0)
@@ -115,45 +115,69 @@ def edits_user_talk(data, index):
 
 # Users
 
-def newCommers(data, index):
-    data['duplicate'] = data['contributor_id'].duplicated()
-    data=data[data['duplicate']==False]
-    series = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+#users_registered_active according to version 2 definition (active -> more than 4 edits)
+def users_registered_active_2(data,index):
+    users_registered = data[data['contributor_name'] != 'Anonymous']
+# get the number of edits each user has done each month
+    monthly_edits = users_registered.groupby([pd.Grouper(key='timestamp', freq='MS'), 'contributor_name']).size()
+# filter users with number >= requested, and make timestamp and contributor_name to be COLUMNS, instead of part of the index
+    monthly_edits_filtered = monthly_edits[monthly_edits > 4].to_frame(name='pages_edited').reset_index()
+# get how many users with >=5 editions exist for each month
+    series = monthly_edits_filtered.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
     return series
 
-def edits_per_month_greather_than_4(data, index):
+#users who have contributed once in the wiki
+def users_newCommers(data, index):
+# approach: get rid of those users who aren't newcommers: they have more than one edition:
+# 1) add extra column: true if the contributor_id is repeated, false otherwise
+    data['duplicated'] = data['contributor_id'].duplicated()
+# 2) keep only those users whose contributor doesn't appear more than once
+    data=data[data['duplicated']==False]
+# 3) Group by timestamp and get the newcommers count per month
+    series = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+#users who make their second edition in the wiki (we want the count for this kind of users per month)
+def users_reincident(data, index):
+    data['test_duplicated'] = data['contributor_id'].duplicated()
+    users_reincident = data[data['test_duplicated'] == True]
+#determine in which month each user performed their second edition-> can be the same month as the first one
+#1) get number of editions per month for every user
+    users_reincident = users_reincident.groupby(['contributor_id', pd.Grouper(key='timestamp', freq='MS')]).size().to_frame('edits_count').reset_index()
+#2) get the accum. number of edits per user each month
+    users_reincident['accum_edit_count'] = users_reincident.groupby('contributor_id')['edits_count'].transform(lambda x: x.cumsum())
+#3) drop rows in which the accum_edit_count is less than 2
+    users_reincident = users_reincident[users_reincident['accum_edit_count'] > 1]
+#4) now, we just want the first month in which the user became reincident: (drop_duplicates drops all rows but first, so as it is sorted, for sure we will keep the first month)
+    users_reincident = users_reincident.drop_duplicates('contributor_id')
+#5) group by timestamp and get the count of reincident users per month
+    series = users_reincident.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+#metric which gets the monthly count of users (registered or not) who have contributed in more than 4 editions to the wiki, during that month-> same as users_registered_active_2, but counting anonymous users
+def edits_per_month(data, index):
     monthly = data.groupby(pd.Grouper(key='timestamp', freq = 'MS'))
     series = monthly.apply(lambda x: len(x.groupby(['contributor_id']).size().where(lambda y: y>4).dropna()))
     return series
 
-def userReincident(data,index)
-    # we want to calculate, per each month, how many reincident users became reincident in that month
-    #erase non-reincident users
-    data['test_duplicated'] = data['contributor_id'].duplicated()
-    users_reincident = data[data['test_duplicated'] == True]
-    #users_reincident.drop('test_duplicated', 1)
-    #determine in which month each user performed their second edition-> can be the same month as the first one
-    #1) get number of editions per month for every user
-    users_reincident = users_reincident.groupby(['contributor_id', pd.Grouper(key='timestamp', freq='MS')]).size().to_frame('edits_count').reset_index()
-    #2) get the accum. number of edits per user each month
-    users_reincident['accum_edit_count'] = users_reincident.groupby('contributor_id')['edits_count'].apply(lambda x: x.cumsum())
-    #3) drop rows in which the accum_edit_count is less than 2
-    users_reincident = users_reincident[users_reincident['accum_edit_count'] > 1]
-    #4) now, we just want the first month in which the user became reincident: (drop_duplicates drops all rows but first, so as it is sorted, for sure we will keep the first month)
-    users_reincident = users_reincident.drop_duplicates('contributor_id')
-    #5) group by timestamp and get the count of reincident users per month
-    users_reincident_monthly = users_reincident.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    return users_reincident_monthly
-
-
+#users active according to version one: those who have contributed to the wiki in one edition during a month (anonymous are included).
 def users_active(data, index):
     monthly_data = data.groupby(pd.Grouper(key='timestamp', freq='MS'))
+# per each month, get rid  of duplicated contributor_ids and count.
     series = monthly_data.apply(lambda x: len(x.contributor_id.unique()))
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
-	
+
+#this metric is the same as the users_active, but getting rid of anonymous users	
 def users_registered_active(data,index):
+# get rid of anonymous users and procceed as it was done in the previous metric.
     user_registered=data[data['contributor_name']!='Anonymous']
     monthly_data_registered=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
     series = monthly_data_registered.apply(lambda x: len(x.contributor_id.unique()))
@@ -161,6 +185,7 @@ def users_registered_active(data,index):
         series = series.reindex(index, fill_value=0)
     return series
 
+# this metric is the complementary to users_registered_active: now, we get rid of registered users and focus on anonymous users.
 def users_anonymous_active(data,index):
     user_registered=data[data['contributor_name']=='Anonymous']
     monthly_data_anonymous=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
@@ -169,12 +194,69 @@ def users_anonymous_active(data,index):
         series = series.reindex(index, fill_value=0)
     return series
 
-def users_active(data,index):
-    user_registered=data[data['contributor_name']=='Anonymous']
-    monthly_data_anonymous=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    series = monthly_data_anonymous.apply(lambda x: len(x.contributor_id))
+def users_less_than_three_months(data, index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    i = len(mothly_edits_users)-1
+    edits_users_three_months_old = []
+    while i > 1:
+        length_one_two_three_month = len(list(set(np.concatenate(np.array(mothly_edits_users.iloc[i-2:i+1, 0])))))
+        edits_users_three_months_old.append(length_one_two_three_month)
+        i = i -1
+
+    length_one_two_month = len(list(set(np.concatenate((np.array(mothly_edits_users.iloc[0:2, 0])), axis=0))))
+    edits_users_three_months_old.append(length_one_two_month)
+    edits_users_three_months_old.append(len(list(mothly_edits_users.iloc[0].edits_users)))
+    #reverse order of the list
+    edits_users_three_months_old = list(reversed(edits_users_three_months_old))               
+    #create a new column in the dataframe
+    mothly_edits_users['edits_users_three_months_old']=edits_users_three_months_old
+    mothly_edits_users = pd.Series(mothly_edits_users.edits_users_three_months_old, index = mothly_edits_users.index.values)
+    return mothly_edits_users
+
+
+def users_more_than_three_months(data,index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    i = len(mothly_edits_users)-1
+    edits_users_three_months_old = []
+    while i > 1:
+        more_than_three_months = np.concatenate(np.array(mothly_edits_users.iloc[0:i-1,0]))
+        less_than_three_months = np.concatenate(np.array(mothly_edits_users.iloc[i-1:i+1,0]))
+        list_valid=np.setdiff1d(more_than_three_months, less_than_three_months)
+        length_list_valid= len(list_valid)
+        edits_users_three_months_old.append(length_list_valid)
+        i = i -1
+    edits_users_three_months_old = edits_users_three_months_old + [0,0]
+
+    #reverse order of the list
+    edits_users_three_months_old = list(reversed(edits_users_three_months_old))
+    #create a new column in the dataframe
+    mothly_edits_users['edits_users_three_months_old']=edits_users_three_months_old
+    mothly_edits_users = pd.Series(mothly_edits_users.edits_users_three_months_old, index = mothly_edits_users.index.values)
+    return mothly_edits_users
+
+
+#this metric is intended to find out how many users, per each month, have edited a main page
+def users_main_page(data, index):
+    edits_main_page = data[data['page_ns'] == 0]
+    series = edits_main_page.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
+    return series
+
+#this metric is intended to find out how many users, per each month, have edited a template page
+def users_template_page(data, index):
+    edits_template_page = data[data['page_ns'] == 10]
+    series = edits_template_page.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+
+def talk_page_users(data,index):
+    data_pageNS_E3 =data[data['page_ns']==3]
+    series = data_pageNS_E3.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     return series
 
 def users_new(data, index):
