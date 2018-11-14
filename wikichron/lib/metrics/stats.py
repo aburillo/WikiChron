@@ -161,7 +161,7 @@ def users_reincident(data, index):
     return series
 
 #metric which gets the monthly count of users (registered or not) who have contributed in more than 4 editions to the wiki, during that month-> same as users_registered_active_2, but counting anonymous users
-def edits_per_month(data, index):
+def users_active_more_than_4(data, index):
     monthly = data.groupby(pd.Grouper(key='timestamp', freq = 'MS'))
     series = monthly.apply(lambda x: len(x.groupby(['contributor_id']).size().where(lambda y: y>4).dropna()))
     return series

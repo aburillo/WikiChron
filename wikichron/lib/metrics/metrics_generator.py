@@ -35,7 +35,7 @@ def generate_metrics():
     metrics.append(Metric('users_newcommers', 'New commers', MetricCategory.USERS, stats.users_newCommers, 'Users who have made one edition'))
     metrics.append(Metric('users_reincident', 'Reincident users', MetricCategory.USERS, stats.users_reincident, 'users who have made more than one edition, distributed per month in which they reached >1 editions'))
     metrics.append(Metric('users_registered_new', 'registered Active users >4 editions', MetricCategory.USERS, stats.users_registered_active_2, 'Registered users distributed by the month(s) in which they have made more than 4 editions'))
-    metrics.append(Metric('users_new', 'Acive users >4 editions', MetricCategory.USERS, stats.edits_per_month, 'users distributed by the month(s) in which they have made more than 4 editions'))
+    metrics.append(Metric('users_active_more_than_4', 'Acive users >4 editions', MetricCategory.USERS, stats.users_active_more_than_4, 'users distributed by the month(s) in which they have made more than 4 editions'))
     metrics.append(Metric('users_new', 'New users', MetricCategory.USERS, stats.users_new, 'Users who have made at least one edition grouped by the month they did their first edit.'))
     metrics.append(Metric('users_main_page', 'Users editing a main page', MetricCategory.USERS, stats.users_main_page, 'Users who have edited a main page'))
     metrics.append(Metric('users_template_page', 'Users editing a template page', MetricCategory.USERS, stats.users_template_page, 'Users who have edited a template page'))
