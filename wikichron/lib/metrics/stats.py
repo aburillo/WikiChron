@@ -258,6 +258,25 @@ def talk_page_users(data,index):
     data_pageNS_E3 =data[data['page_ns']==3]
     series = data_pageNS_E3.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     return series
+	
+	
+def edits_user_three_months_in_a_row(data, index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    i = len(mothly_edits_users)-1
+    edits_users_three_months_old = []
+    intersectList=lambda l : len(list(set(l[0]) & set(l[1]) & set(l[2])))
+    while i > 1:
+        length_one_two_three_month = intersectList(np.array(mothly_edits_users.iloc[i-2:i+1, 0]))
+        edits_users_three_months_old.append(length_one_two_three_month)
+        i = i -1
+    edits_users_three_months_old=edits_users_three_months_old + [0,0]
+    #reverse order of the list
+    edits_users_three_months_old = list(reversed(edits_users_three_months_old))               
+    #create a new column in the dataframe
+    mothly_edits_users['edits_users_three_months_old']=edits_users_three_months_old
+    mothly_edits_users = pd.Series(mothly_edits_users.edits_users_three_months_old, index = mothly_edits_users.index.values)
+    return mothly_edits_users
 
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
