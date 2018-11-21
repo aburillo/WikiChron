@@ -194,6 +194,7 @@ def users_anonymous_active(data,index):
         series = series.reindex(index, fill_value=0)
     return series
 
+# this metric gets the users whose last edition is less than three months old (for each month)
 def users_less_than_three_months(data, index):
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
     mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
@@ -214,7 +215,7 @@ def users_less_than_three_months(data, index):
     mothly_edits_users = pd.Series(mothly_edits_users.edits_users_three_months_old, index = mothly_edits_users.index.values)
     return mothly_edits_users
 
-
+# this metric gets the users whose last edition is more than three months old (for each month)
 def users_more_than_three_months(data,index):
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
     mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
@@ -259,8 +260,8 @@ def talk_page_users(data,index):
     series = data_pageNS_E3.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     return series
 	
-	
-def edits_user_three_months_in_a_row(data, index):
+# this metric gets the users who have edited the wiki during three months in a row.	
+def users_editing_three_months_in_a_row(data, index):
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
     mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
     i = len(mothly_edits_users)-1
@@ -277,8 +278,9 @@ def edits_user_three_months_in_a_row(data, index):
     mothly_edits_users['edits_users_three_months_old']=edits_users_three_months_old
     mothly_edits_users = pd.Series(mothly_edits_users.edits_users_three_months_old, index = mothly_edits_users.index.values)
     return mothly_edits_users
-	
-def edits_user_six_months_in_a_row(data, index):
+
+# this metric gets the users who have edited the wiki during six months in a row.	
+def users_editing_six_months_in_a_row(data, index):
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
     mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
     i = len(mothly_edits_users)-1
