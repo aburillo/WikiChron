@@ -258,6 +258,35 @@ def edits_users_more_than_six_months(data,index):
     if index is not None:
         mothly_edits_users = mothly_edits_users.reindex(index, fill_value=0)
     return mothly_edits_users
+	
+def edits_users_between_three_six_months(data, index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    i = len(mothly_edits_users)-1
+    edits_users_three_six_months_old = []
+    while i > 2: 
+        less_than_three = np.concatenate(np.array(mothly_edits_users.iloc[i-2:i+1,0]))
+        if i >5:
+            four_six = np.concatenate(np.array(mothly_edits_users.iloc[i-5:i-2,0]))
+            more_than_six = np.concatenate(np.array(mothly_edits_users.iloc[0:i-5,0]))
+            less_than_three_and_more_than_six = np.concatenate((more_than_six, less_than_three), axis=0)    
+        else:
+            four_six = np.concatenate(np.array(mothly_edits_users.iloc[0:i-2,0]))
+            less_than_three_and_more_than_six = less_than_three
+        list_valid=np.setdiff1d(four_six, less_than_three_and_more_than_six)
+        length_list_valid= len(list_valid)
+        edits_users_three_six_months_old.append(length_list_valid)
+        i = i -1 
+    edits_users_three_six_months_old = edits_users_three_six_months_old + [0,0,0]
+    #reverse order of the list
+    edits_users_three_six_months_old = list(reversed(edits_users_three_six_months_old))
+    #create a new column in the dataframe
+    mothly_edits_users['edits_users_three_six_months_old']=edits_users_three_six_months_old
+    series = pd.Series(mothly_edits_users.edits_users_three_six_months_old, index = mothly_edits_users.index.values)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
 
 #this metric is intended to find out how many users, per each month, have edited a main page
 def users_main_page(data, index):
