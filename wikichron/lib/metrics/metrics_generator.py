@@ -43,6 +43,7 @@ def generate_metrics():
     metrics.append(Metric('users_active_anonymous', 'Active anonymous users', MetricCategory.USERS, stats.users_anonymous_active, 'New users registration per month who have made at least one edition.'))
     metrics.append(Metric('users_less_than_three_months', 'Users with less than 3 months old last edit', MetricCategory.USERS, stats.users_less_than_three_months, 'users per month whose last edition is less than 3 months old.'))
     metrics.append(Metric('users_more_than_three_months', 'Users with more than 3 months old last edit', MetricCategory.USERS, stats.users_more_than_three_months, 'users per month whose last edition is more than 3 months old.'))
+    metrics.append(Metric('users_more_than_six_months', 'Users with more than six months old last edit', MetricCategory.USERS, stats.edits_users_more_than_six_months, 'users per month whose last edition is more than six months old.'))
     metrics.append(Metric('talk_page_users', 'User Edit Talk Page', MetricCategory.USERS, stats.talk_page_users, 'Users that have edited a talk page.'))
     metrics.append(Metric('users editing three months in a row', 'User editing during three months in a row', MetricCategory.USERS, stats.users_editing_three_months_in_a_row, 'Users that have edited during three months in a row.'))
     metrics.append(Metric('users editing six months in a row', 'User editing during six months in a row', MetricCategory.USERS, stats.users_editing_six_months_in_a_row, 'Users that have edited during six months in a row.'))
