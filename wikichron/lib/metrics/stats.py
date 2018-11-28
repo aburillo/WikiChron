@@ -128,19 +128,6 @@ def users_registered_active_2(data,index):
         series = series.reindex(index, fill_value=0)
     return series
 
-#users who have contributed once in the wiki
-def users_newCommers(data, index):
-# approach: get rid of those users who aren't newcommers: they have more than one edition:
-# 1) add extra column: true if the contributor_id is repeated, false otherwise
-    data['duplicated'] = data['contributor_id'].duplicated()
-# 2) keep only those users whose contributor doesn't appear more than once
-    data=data[data['duplicated']==False]
-# 3) Group by timestamp and get the newcommers count per month
-    series = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
 #users who make their second edition in the wiki (we want the count for this kind of users per month)
 def users_reincident(data, index):
     data['test_duplicated'] = data['contributor_id'].duplicated()
@@ -237,6 +224,7 @@ def users_more_than_three_months(data,index):
     mothly_edits_users = pd.Series(mothly_edits_users.edits_users_three_months_old, index = mothly_edits_users.index.values)
     return mothly_edits_users
 
+# this metric gets the users whose last edition is more than 6 months old (for each month)
 def edits_users_more_than_six_months(data,index):
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
     mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
@@ -258,7 +246,8 @@ def edits_users_more_than_six_months(data,index):
     if index is not None:
         mothly_edits_users = mothly_edits_users.reindex(index, fill_value=0)
     return mothly_edits_users
-	
+
+#get the number of users, per each month, whose last edit was between < 3 and >= 6 months ago	
 def edits_users_between_three_six_months(data, index):
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
     mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
