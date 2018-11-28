@@ -338,6 +338,66 @@ def users_editing_six_months_in_a_row(data, index):
     mothly_edits_users = pd.Series(mothly_edits_users.edits_six_months_old, index = mothly_edits_users.index.values)
     return mothly_edits_users
 
+# this metric categorizes the user according to their activity level: to be included in the category in month X, they must have completed between 1 and 4 editions until month X-1 (included)
+def users_number_of_edits_between_1_and_4(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS'))
+                                                        .size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('included') in which 2 values are possible: 1. if the user has made between >=1 and <=4 editions in month x - 1 (shift function is used to access the previous row), month appears. 2. Otherwise, the value in the 'included' column will be NaT.
+    users_month_edits['included'] = users_month_edits.loc[((users_month_edits['nEdits'].shift()<=4) &
+                                                       (users_month_edits['nEdits'].shift()>=1)) & 
+                                                      (users_month_edits['contributor_id'].shift() == users_month_edits['contributor_id']), 'timestamp']
+# 4) count the number of appereances each timestamp has in the 'included' column:
+    series = users_month_edits.groupby(['included']).size().reindex(new_index, fill_value=0)
+    return series
+
+# this metric categorizes the user according to their activity level: to be included in the category in month X, they must have completed between 5 and 24 editions until month X-1 (included)
+def users_number_of_edits_between_5_and_24(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS'))
+                                                        .size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('included') in which 2 values are possible: 1. if the user has made between >=1 and <=4 editions in month x - 1 (shift function is used to access the previous row), month appears. 2. Otherwise, the value in the 'included' column will be NaT.
+    users_month_edits['included'] = users_month_edits.loc[((users_month_edits['nEdits'].shift()<=24) &
+                                                       (users_month_edits['nEdits'].shift()>=5)) & 
+                                                      (users_month_edits['contributor_id'].shift() == users_month_edits['contributor_id']), 'timestamp']
+# 4) count the number of appereances each timestamp has in the 'included' column:
+    series = users_month_edits.groupby(['included']).size().reindex(new_index, fill_value=0)
+    return series
+
+# this metric categorizes the user according to their activity level: to be included in the category in month X, they must have completed between 25 and 99 editions until month X-1 (included)
+def users_number_of_edits_between_25_and_99(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS'))
+                                                        .size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('included') in which 2 values are possible: 1. if the user has made between >=1 and <=4 editions in month x - 1 (shift function is used to access the previous row), month appears. 2. Otherwise, the value in the 'included' column will be NaT.
+    users_month_edits['included'] = users_month_edits.loc[((users_month_edits['nEdits'].shift()<=99) &
+                                                       (users_month_edits['nEdits'].shift()>=25)) & 
+                                                      (users_month_edits['contributor_id'].shift() == users_month_edits['contributor_id']), 'timestamp']
+# 4) count the number of appereances each timestamp has in the 'included' column:
+    series = users_month_edits.groupby(['included']).size().reindex(new_index, fill_value=0)
+    return series
+
+# this metric categorizes the user according to their activity level: to be included in the category in month X, they must have completed >=100 editions until month X-1 (included)
+def users_number_of_edits_highEq_100(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS'))
+                                                        .size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('included') in which 2 values are possible: 1. if the user has made between >=1 and <=4 editions in month x - 1 (shift function is used to access the previous row), month appears. 2. Otherwise, the value in the 'included' column will be NaT.
+    users_month_edits['included'] = users_month_edits.loc[(users_month_edits['nEdits'].shift()>=100) & 
+                                                      (users_month_edits['contributor_id'].shift() == users_month_edits['contributor_id']), 'timestamp']
+# 4) count the number of appereances each timestamp has in the 'included' column:
+    series = users_month_edits.groupby(['included']).size().reindex(new_index, fill_value=0)
+    return series
+
+
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
     series = users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()

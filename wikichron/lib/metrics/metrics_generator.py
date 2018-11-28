@@ -32,6 +32,10 @@ def generate_metrics():
     metrics.append(Metric('edits_main_content_accum', 'Total edits in articles', MetricCategory.EDITIONS, stats.edits_main_content_accum, 'Editions to articles accumulated at every month'))
 
     # Users
+    metrics.append(Metric('users_edits_between_1_4', 'users # editions between 1 & 4', MetricCategory.USERS, stats.users_number_of_edits_between_1_and_4, 'users according to their activity level: to be included in this category in month X, they must have completed between 1 and 4 editions until month X-1 (included)'))
+    metrics.append(Metric('users_edits_between_5_24', 'users # editions between 5 & 24', MetricCategory.USERS, stats.users_number_of_edits_between_5_and_24, 'users according to their activity level: to be included in this category in month X, they must have completed between 5 and 24 editions until month X-1 (included)'))
+    metrics.append(Metric('users_edits_between_25_99', 'users # editions between 25 & 99', MetricCategory.USERS, stats.users_number_of_edits_between_25_and_99, 'users according to their activity level: to be included in this category in month X, they must have completed between 25 and 99 editions until month X-1 (included)'))
+    metrics.append(Metric('users_edits_highEq_100', 'users # editions >=100', MetricCategory.USERS, stats.users_number_of_edits_highEq_100, 'users according to their activity level: to be included in this category in month X, they must have completed >= 100 editions until month X-1 (included)'))
     metrics.append(Metric('users_reincident', 'Reincident users', MetricCategory.USERS, stats.users_reincident, 'users who have made more than one edition, distributed per month in which they reached >1 editions'))
     metrics.append(Metric('users_registered_new', 'registered Active users >4 editions', MetricCategory.USERS, stats.users_registered_active_2, 'Registered users distributed by the month(s) in which they have made more than 4 editions'))
     metrics.append(Metric('users_active_more_than_4', 'Acive users >4 editions', MetricCategory.USERS, stats.users_active_more_than_4, 'users distributed by the month(s) in which they have made more than 4 editions'))
