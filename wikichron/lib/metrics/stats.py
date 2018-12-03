@@ -338,6 +338,7 @@ def users_editing_six_months_in_a_row(data, index):
     mothly_edits_users = pd.Series(mothly_edits_users.edits_six_months_old, index = mothly_edits_users.index.values)
     return mothly_edits_users
 
+
 # this metric categorizes the user according to their activity level: to be included in the category in month X, they must have completed between 1 and 4 editions until month X-1 (included)
 def users_number_of_edits_between_1_and_4(data, index):
 # 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
@@ -395,6 +396,24 @@ def users_number_of_edits_highEq_100(data, index):
                                                       (users_month_edits['contributor_id'].shift() == users_month_edits['contributor_id']), 'timestamp']
 # 4) count the number of appereances each timestamp has in the 'included' column:
     series = users_month_edits.groupby(['included']).size().reindex(new_index, fill_value=0)
+    return series
+
+
+def current_streak_this_month(data, index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    current_streak_this_month = []
+    current_streak_this_month.append(len(mothly_edits_users.iloc[0,0]))
+    i = 1
+    while i < len(mothly_edits_users):
+        current_month = np.array(mothly_edits_users.iloc[i,0])
+        last_month = np.array(mothly_edits_users.iloc[i-1,0])
+        current_streak_this_month.append(len(np.setdiff1d(current_month, last_month)))
+        i = i +1
+    mothly_edits_users['current_streak_this_month'] = current_streak_this_month
+    series = pd.Series(mothly_edits_users.current_streak_this_month, mothly_edits_users.index.values)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
     return series
 
 
