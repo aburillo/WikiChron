@@ -52,6 +52,7 @@ def generate_metrics():
     metrics.append(Metric('users editing three months in a row', 'User editing during three months in a row', MetricCategory.USERS, stats.users_editing_three_months_in_a_row, 'Users that have edited during three months in a row.'))
     metrics.append(Metric('users editing six months in a row', 'User editing during six months in a row', MetricCategory.USERS, stats.users_editing_six_months_in_a_row, 'Users that have edited during six months in a row.'))
     metrics.append(Metric('current streak this month', 'Current streak start this month', MetricCategory.USERS, stats.current_streak_this_month, 'Users whose current streak start this month'))
+    metrics.append(Metric('current streak 2 or 3 months in a row', 'Current streak of 2 or 3 months in a row', MetricCategory.USERS, stats.current_streak_2_or_3_months_in_a_row, 'Users whose current streak is two or three months in a row including the current month'))
     metrics.append(Metric('users_new_registered', 'New registered users', MetricCategory.USERS, stats.users_new_registered, 'New users registration per month who have made at least one edition.'))
     metrics.append(Metric('users_new_anonymous', 'New anonymous users', MetricCategory.USERS, stats.users_new_anonymous, 'Anonymous users who made at least one edition grouped by the month they did their first edit. Anonymous are identified by their ip.'))
     metrics.append(Metric('users_active', 'Active users', MetricCategory.USERS, stats.users_active, 'Number of users who have made at least one contribution for each month.'))
