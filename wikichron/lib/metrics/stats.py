@@ -441,6 +441,30 @@ def current_streak_2_or_3_months_in_a_row(data, index):
     return series
 
 
+def current_streak_4_or_6_months_in_a_row(data, index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    current_streak_between_4_6_months = []
+    current_streak_between_4_6_months = current_streak_between_4_6_months + [0,0,0]
+    intersectList = lambda l: set(l[0]) & set(l[1]) & set(l[2]) & set(l[3])
+    i=3
+    while i < 6:
+        four_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-3:i+1, 0]))
+        current_streak_between_4_6_months.append(len(four_months_in_a_row))
+        i = i + 1
+    i = 6
+    while i < len(mothly_edits_users):
+        four_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-3:i+1, 0]))
+        month_7 = np.array(mothly_edits_users.iloc[i-6,0])
+        current_streak_between_4_6_months.append(len(four_months_in_a_row.difference(month_7)))
+        i = i + 1
+    mothly_edits_users['current_streak_between_4_6_months'] = current_streak_between_4_6_months
+    series = pd.Series(mothly_edits_users.current_streak_between_4_6_months, mothly_edits_users.index.values)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
     series = users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
