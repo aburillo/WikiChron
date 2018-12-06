@@ -456,6 +456,20 @@ def users_first_edit_between_1_3_months_ago(data, index):
         series = series.reindex(index, fill_value=0)
     return series
 
+# this metric counts the users whose first edition was between 4 and 6 months ago: 6 >= x >= 4
+def users_first_edit_between_4_6_months_ago(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits = data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('included') in which 2 values are possible: 1. if the users first edition was between 4 and 6 months ago (look at months X-4, X-5 and X-6), the user is included in month X: users_month_edits[user][included] = X. 2. Otherwise, the value in the 'included' column will be NaT.
+    users_month_edits['included'] = users_month_edits.loc[(((users_month_edits['contributor_id'].shift(4) == users_month_edits['contributor_id']) & ((users_month_edits['contributor_id'].shift(5) != users_month_edits['contributor_id']) & (users_month_edits['nEdits'].shift(4)>0))) | ((users_month_edits['contributor_id'].shift(5) == users_month_edits['contributor_id']) & ((users_month_edits['contributor_id'].shift(6) != users_month_edits['contributor_id']) & (users_month_edits['nEdits'].shift(5)>0))) | ((users_month_edits['contributor_id'].shift(6) == users_month_edits['contributor_id']) & ((users_month_edits['contributor_id'].shift(7) != users_month_edits['contributor_id']) & (users_month_edits['nEdits'].shift(6)>0)))) | (((users_month_edits['nEdits'].shift(5)==0) & (users_month_edits['nEdits'].shift(4)>0)) | ((users_month_edits['nEdits'].shift(6)==0) & (users_month_edits['nEdits'].shift(5)>0)) | ((users_month_edits['nEdits'].shift(7)==0) & (users_month_edits['nEdits'].shift(6)>0))), 'timestamp']
+# 4) count the number of appereances each timestamp has in the 'included' column:
+    series = users_month_edits.groupby(['included']).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
     series = users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
