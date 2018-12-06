@@ -298,46 +298,6 @@ def talk_page_users(data,index):
     data_pageNS_E3 =data[data['page_ns']==3]
     series = data_pageNS_E3.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     return series
-	
-# this metric gets the users who have edited the wiki during three months in a row.	
-def users_editing_three_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    i = len(mothly_edits_users)-1
-    edits_users_three_months_old = []
-    intersectList=lambda l : len(list(set(l[0]) & set(l[1]) & set(l[2])))
-    while i > 1:
-        length_one_two_three_month = intersectList(np.array(mothly_edits_users.iloc[i-2:i+1, 0]))
-        edits_users_three_months_old.append(length_one_two_three_month)
-        i = i -1
-    edits_users_three_months_old=edits_users_three_months_old + [0,0]
-    #reverse order of the list
-    edits_users_three_months_old = list(reversed(edits_users_three_months_old))               
-    #create a new column in the dataframe
-    mothly_edits_users['edits_users_three_months_old']=edits_users_three_months_old
-    mothly_edits_users = pd.Series(mothly_edits_users.edits_users_three_months_old, index = mothly_edits_users.index.values)
-    return mothly_edits_users
-
-# this metric gets the users who have edited the wiki during six months in a row.	
-def users_editing_six_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    i = len(mothly_edits_users)-1
-    edits_six_months_old = []
-    intersectList=lambda l : len(list(set(l[0]) & set(l[1]) & set(l[2]) & set(l[3]) & set(l[4]) & set(l[5])))
-    while i > 4:
-        length_six_month = intersectList(np.array(mothly_edits_users.iloc[i-5:i+1, 0]))
-        edits_six_months_old.append(length_six_month)
-        i = i -1
-
-    edits_six_months_old=edits_six_months_old + [0,0,0,0,0]
-    #reverse order of the list
-    edits_six_months_old = list(reversed(edits_six_months_old))               
-    #create a new column in the dataframe
-    mothly_edits_users['edits_six_months_old']=edits_six_months_old
-    mothly_edits_users = pd.Series(mothly_edits_users.edits_six_months_old, index = mothly_edits_users.index.values)
-    return mothly_edits_users
-
 
 # this metric categorizes the user according to their activity level: to be included in the category in month X, they must have completed between 1 and 4 editions until month X-1 (included)
 def users_number_of_edits_between_1_and_4(data, index):
