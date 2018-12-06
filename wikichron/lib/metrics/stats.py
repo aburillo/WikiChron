@@ -247,7 +247,7 @@ def edits_users_more_than_six_months(data,index):
         mothly_edits_users = mothly_edits_users.reindex(index, fill_value=0)
     return mothly_edits_users
 
-#get the number of users, per each month, whose last edit was between < 3 and >= 6 months ago	
+#get the number of users, per each month, whose last edit was between > 3 and <= 6 months ago	
 def edits_users_between_three_six_months(data, index):
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
     mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
@@ -442,6 +442,19 @@ def current_streak_more_than_six_months_in_a_row(data, index):
         series = series.reindex(index, fill_value=0)
     return series
 
+# this metric counts the users whose first edition was between 1 and 3 months ago: 3 >= x >= 1
+def users_first_edit_between_1_3_months_ago(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('included') in which 2 values are possible: 1. if the users first edition was between 1 and 3 months ago (look at months X-1, X-2 and X-3), the user is included in month X: users_month_edits[user][included] = X. 2. Otherwise, the value in the 'included' column will be NaT.
+    users_month_edits['included'] = users_month_edits.loc[(((users_month_edits['contributor_id'].shift() == users_month_edits['contributor_id']) & ((users_month_edits['contributor_id'].shift(2) != users_month_edits['contributor_id']) & (users_month_edits['nEdits'].shift()>0))) | ((users_month_edits['contributor_id'].shift(2) == users_month_edits['contributor_id']) & ((users_month_edits['contributor_id'].shift(3) != users_month_edits['contributor_id']) & (users_month_edits['nEdits'].shift(2)>0))) | ((users_month_edits['contributor_id'].shift(3) == users_month_edits['contributor_id']) & ((users_month_edits['contributor_id'].shift(4) != users_month_edits['contributor_id']) & (users_month_edits['nEdits'].shift(3)>0)))) | (((users_month_edits['nEdits'].shift(2)==0) & (users_month_edits['nEdits'].shift()>0)) | ((users_month_edits['nEdits'].shift(3)==0) & (users_month_edits['nEdits'].shift(2)>0)) | ((users_month_edits['nEdits'].shift(4)==0) & (users_month_edits['nEdits'].shift(3)>0))), 'timestamp']
+# 4) count the number of appereances each timestamp has in the 'included' column:
+    series = users_month_edits.groupby(['included']).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
 
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
