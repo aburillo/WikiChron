@@ -60,7 +60,8 @@ def generate_metrics():
     metrics.append(Metric('users_registered_accum', 'Total registered users', MetricCategory.USERS, stats.users_registered_accum, 'Total registered users at every month. Note that users have to have made at least one edition and they have to be logged with their account when they did that edition.'))
     metrics.append(Metric('users_anonymous_accum', 'Total anonymous users', MetricCategory.USERS, stats.users_anonymous_accum, 'Anonymous users who have made at least one edition accumulated at every month. Anonymous are identified by their ip.'))
     metrics.append(Metric('users_first_edit_between_1_3_months_ago', 'Users first edit between 1 and 3 months ago', MetricCategory.USERS, stats.users_first_edit_between_1_3_months_ago, 'Users whose first edition was between 1 and 3 months ago'))
-    metrics.append(Metric('users_first_edit_between_4_6_months_ago', 'Users first edit between 4 and 6 months ago', MetricCategory.USERS, stats.users_first_edit_between_1_3_months_ago, 'Users whose first edition was between 4 and 6 months ago'))
+    metrics.append(Metric('users_first_edit_between_4_6_months_ago', 'Users first edit between 4 and 6 months ago', MetricCategory.USERS, stats.users_first_edit_between_4_6_months_ago, 'Users whose first edition was between 4 and 6 months ago'))
+    metrics.append(Metric('users_first_edit_more_than_6_months_ago', 'Users first edit more than 6 months ago', MetricCategory.USERS, stats.users_first_edit_more_than_6_months_ago, 'Users whose first edition was more than 6 months ago'))
 
     # RATIO
     metrics.append(Metric('edits_per_users_monthly', 'Edits per users', MetricCategory.RATIOS, stats.edits_per_users_monthly, 'Number of edits for every month per number of active users that month'))
