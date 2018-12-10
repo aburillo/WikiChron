@@ -30,6 +30,10 @@ def generate_metrics():
     metrics.append(Metric('edits_user_talk', 'Edits in user talk', MetricCategory.EDITIONS, stats.edits_user_talk, 'Editions to user discussion pages'))
     metrics.append(Metric('edits_accum', 'Total edits in pages', MetricCategory.EDITIONS, stats.edits_accum, 'Total editions to any part of the wiki accumulated at every month'))
     metrics.append(Metric('edits_main_content_accum', 'Total edits in articles', MetricCategory.EDITIONS, stats.edits_main_content_accum, 'Editions to articles accumulated at every month'))
+    metrics.append(Metric('edits_last_month_ago', 'Edits last month', MetricCategory.EDITIONS, stats.edit_last_month, ''))
+    metrics.append(Metric('edit_2or3_month_ago', 'Edit 2 or 3 month ago', MetricCategory.EDITIONS, stats.edit_2or3_month_ago, ''))
+    metrics.append(Metric('edit_between_3and6_month_ago', 'Edit between 3 and 6 month ago', MetricCategory.EDITIONS, stats.edit_between_3and6_month_ago, ''))
+    metrics.append(Metric('edit_mt_6_month_ago', 'Edit more than 6 month ago', MetricCategory.EDITIONS, stats.edit_mt_6_month_ago, ''))
 
     # Users
     metrics.append(Metric('users_edits_between_1_4', 'users # editions between 1 & 4', MetricCategory.USERS, stats.users_number_of_edits_between_1_and_4, 'users according to their activity level: to be included in this category in month X, they must have completed between 1 and 4 editions until month X-1 (included)'))

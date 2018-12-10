@@ -111,6 +111,71 @@ def edits_user_talk(data, index):
     edits_talk_data = data[data['page_ns'] == 3]
     return (edits(edits_talk_data, index))
 
+def edit_last_month(data,index):
+
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    unionList = lambda l: set(l[0]) | set(l[2])
+    edit_last_month = [0,len(np.setdiff1d(np.array(mothly_edits_users.iloc[0,0]),np.array(mothly_edits_users.iloc[1,0])))]
+    i = 2
+    while i < len(mothly_edits_users):
+        current_month = list(unionList(np.array(mothly_edits_users.iloc[i-2:i+1,0])))
+        last_month = list(mothly_edits_users.iloc[i-1,0])
+        edit_last_month.append(len(np.setdiff1d(last_month, current_month)))
+        i = i + 1
+    mothly_edits_users['edit_last_month'] = edit_last_month
+    series = pd.Series(mothly_edits_users.edit_last_month, mothly_edits_users.index.values)
+    return series
+
+def edit_2or3_month_ago(data,index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    unionList1 = lambda l: np.setdiff1d(np.union1d(l[1],l[2]),np.union1d(l[0],np.union1d(l[3],l[4])))
+    unionList = lambda l: set(l[0]) | set(l[2])
+    edit_2or3_month = [0, 0]
+    edit_2or3_month.append(len(np.setdiff1d(np.array(mothly_edits_users.iloc[0,0]),np.union1d(np.array(mothly_edits_users.iloc[1,0]), np.array(mothly_edits_users.iloc[2,0])))))
+    edit_2or3_month.append(len(np.setdiff1d(np.union1d(np.array(mothly_edits_users.iloc[0,0]),np.array(mothly_edits_users.iloc[1,0])), np.union1d(np.array(mothly_edits_users.iloc[2,0]), np.array(mothly_edits_users.iloc[3,0])))))
+    i = 4
+    while i < len(mothly_edits_users):
+        edit_2or3_month.append(len(unionList1(np.array(mothly_edits_users.iloc[i-4:i+1,0]))))
+        i = i + 1
+    mothly_edits_users['edit_2or3_month'] = edit_2or3_month
+    series = pd.Series(mothly_edits_users.edit_2or3_month, mothly_edits_users.index.values)
+    return series
+
+def edit_between_3and6_month_ago(data,index):
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    unionList1 = lambda l: np.setdiff1d(unionList(l[1:4]),np.union1d(l[7],np.union1d(l[0],unionList(l[4:7]))))
+    unionList = lambda l: np.union1d(l[0],np.union1d(l[1],l[2]))
+    edit_between_3and6_month = [0, 0, 0, 0]
+    #dif 4 mes con 0..3
+    edit_between_3and6_month.append(len(np.setdiff1d(np.array(mothly_edits_users.iloc[0,0]),np.union1d(np.array(mothly_edits_users.iloc[1,0]), unionList(np.array(mothly_edits_users.iloc[2:5,0]))))))
+    #dif 4 y 5 mes con 0..3
+    edit_between_3and6_month.append(len(np.setdiff1d(np.union1d(np.array(mothly_edits_users.iloc[0,0]),np.array(mothly_edits_users.iloc[1,0])), np.union1d(np.array(mothly_edits_users.iloc[2,0]), unionList(np.array(mothly_edits_users.iloc[3:6,0]))))))
+    #dif 4...6  mes con 0..3
+    edit_between_3and6_month.append(len(np.setdiff1d(unionList(np.array(mothly_edits_users.iloc[0:3,0])), np.union1d(np.array(mothly_edits_users.iloc[3,0]), unionList(np.array(mothly_edits_users.iloc[4:7,0]))))))
+    i = 7
+    while i < len(mothly_edits_users):
+        edit_between_3and6_month.append(len(unionList1(np.array(mothly_edits_users.iloc[i-7:i+1,0]))))
+        i = i + 1
+    mothly_edits_users['edit_between_3and6_month'] = edit_between_3and6_month
+    series = pd.Series(mothly_edits_users.edit_between_3and6_month, mothly_edits_users.index.values)
+    return series
+
+def edit_mt_6_month_ago(data,index):
+
+    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
+    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
+    edit_more_6_month = [0, 0, 0, 0, 0, 0]
+    i = 6
+    while i < len(mothly_edits_users):
+        edit_more_6_month.append(len(np.setdiff1d((np.concatenate(np.array(mothly_edits_users.iloc[0:i-5,0]))), np.concatenate(np.array(mothly_edits_users.iloc[i-5:i+1,0])))))
+        i = i + 1
+    mothly_edits_users['edit_more_6_month'] = edit_more_6_month
+    series = pd.Series(mothly_edits_users.edit_more_6_month, mothly_edits_users.index.values)
+    return series
+
 ########################################################################
 
 # Users
