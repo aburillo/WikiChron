@@ -517,9 +517,10 @@ def users_first_edit_between_1_3_months_ago(data, index):
     cond = users_month_edits['nEdits'] == 0
     users_month_edits['position'] = np.where(cond, 0, users_month_edits.groupby([cond, 'contributor_id']).cumcount() + 1)
 # 4) get per each month, only those users whose first edit was in month X-1, X-2 or X-3 : the number in the position column of the month for that user is >= 2 and <= 4:
-    users_month_edits['included'] = users_month_edits.loc[(users_month_edits['position'] >= 2) & (users_month_edits['position'] <= 4), 'timestamp']
+    cond1 = ((users_month_edits['position'] >= 2) & (users_month_edits['position'] <= 4)) & (users_month_edits['nEdits'] != users_month_edits['nEdits'].shift())
+    users_month_edits['included'] = np.where(cond1, 1,0)
 # 5) count the number of appereances each timestamp has in the 'included' column:
-    series = users_month_edits.groupby(['included']).size()
+    series = pd.Series(users_month_edits.groupby(['timestamp']).sum()['included'], new_index)
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
@@ -534,9 +535,10 @@ def users_first_edit_between_4_6_months_ago(data, index):
     cond = users_month_edits['nEdits'] == 0
     users_month_edits['position'] = np.where(cond, 0, users_month_edits.groupby([cond, 'contributor_id']).cumcount() + 1)
 # 4) get per each month, only those users whose first edit was in month X-4, X-5 or X-6 : the number in the position column of the month for that user is > 4 and <= 7:
-    users_month_edits['included'] = users_month_edits.loc[(users_month_edits['position'] > 4) & (users_month_edits['position'] <= 7), 'timestamp']
+    cond1 = ((users_month_edits['position'] > 4) & (users_month_edits['position'] <= 7)) & (users_month_edits['nEdits'] != users_month_edits['nEdits'].shift())
+    users_month_edits['included'] = np.where(cond1, 1, 0)
 # 5) count the number of appereances each timestamp has in the 'included' column:
-    series = users_month_edits.groupby(['included']).size()
+    series = pd.Series(users_month_edits.groupby(['timestamp']).sum()['included'], new_index)
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
@@ -551,9 +553,10 @@ def users_first_edit_more_than_6_months_ago(data, index):
     cond = users_month_edits['nEdits'] == 0
     users_month_edits['position'] = np.where(cond, 0, users_month_edits.groupby([cond, 'contributor_id']).cumcount() + 1)
 # 4) get per each month, only those users whose first edit was in month X-7 on: the number in the position column of the month for that user is > 7:
-    users_month_edits['included'] = users_month_edits.loc[(users_month_edits['position'] > 7), 'timestamp']
+    cond1 = (users_month_edits['position'] > 7) & (users_month_edits['nEdits'] != users_month_edits['nEdits'].shift())
+    users_month_edits['included'] = np.where(cond1, 1, 0)
 # 5) count the number of appereances each timestamp has in the 'included' column:
-    series = users_month_edits.groupby(['included']).size()
+    series = pd.Series(users_month_edits.groupby(['timestamp']).sum()['included'], new_index)
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
