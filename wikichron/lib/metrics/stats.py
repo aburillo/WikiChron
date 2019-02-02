@@ -111,71 +111,6 @@ def edits_user_talk(data, index):
     edits_talk_data = data[data['page_ns'] == 3]
     return (edits(edits_talk_data, index))
 
-def edit_last_month(data,index):
-
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    unionList = lambda l: set(l[0]) | set(l[2])
-    edit_last_month = [0,len(np.setdiff1d(np.array(mothly_edits_users.iloc[0,0]),np.array(mothly_edits_users.iloc[1,0])))]
-    i = 2
-    while i < len(mothly_edits_users):
-        current_month = list(unionList(np.array(mothly_edits_users.iloc[i-2:i+1,0])))
-        last_month = list(mothly_edits_users.iloc[i-1,0])
-        edit_last_month.append(len(np.setdiff1d(last_month, current_month)))
-        i = i + 1
-    mothly_edits_users['edit_last_month'] = edit_last_month
-    series = pd.Series(mothly_edits_users.edit_last_month, mothly_edits_users.index.values)
-    return series
-
-def edit_2or3_month_ago(data,index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    unionList1 = lambda l: np.setdiff1d(np.union1d(l[1],l[2]),np.union1d(l[0],np.union1d(l[3],l[4])))
-    unionList = lambda l: set(l[0]) | set(l[2])
-    edit_2or3_month = [0, 0]
-    edit_2or3_month.append(len(np.setdiff1d(np.array(mothly_edits_users.iloc[0,0]),np.union1d(np.array(mothly_edits_users.iloc[1,0]), np.array(mothly_edits_users.iloc[2,0])))))
-    edit_2or3_month.append(len(np.setdiff1d(np.union1d(np.array(mothly_edits_users.iloc[0,0]),np.array(mothly_edits_users.iloc[1,0])), np.union1d(np.array(mothly_edits_users.iloc[2,0]), np.array(mothly_edits_users.iloc[3,0])))))
-    i = 4
-    while i < len(mothly_edits_users):
-        edit_2or3_month.append(len(unionList1(np.array(mothly_edits_users.iloc[i-4:i+1,0]))))
-        i = i + 1
-    mothly_edits_users['edit_2or3_month'] = edit_2or3_month
-    series = pd.Series(mothly_edits_users.edit_2or3_month, mothly_edits_users.index.values)
-    return series
-
-def edit_between_3and6_month_ago(data,index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    unionList1 = lambda l: np.setdiff1d(unionList(l[1:4]),np.union1d(l[7],np.union1d(l[0],unionList(l[4:7]))))
-    unionList = lambda l: np.union1d(l[0],np.union1d(l[1],l[2]))
-    edit_between_3and6_month = [0, 0, 0, 0]
-    #dif 4 mes con 0..3
-    edit_between_3and6_month.append(len(np.setdiff1d(np.array(mothly_edits_users.iloc[0,0]),np.union1d(np.array(mothly_edits_users.iloc[1,0]), unionList(np.array(mothly_edits_users.iloc[2:5,0]))))))
-    #dif 4 y 5 mes con 0..3
-    edit_between_3and6_month.append(len(np.setdiff1d(np.union1d(np.array(mothly_edits_users.iloc[0,0]),np.array(mothly_edits_users.iloc[1,0])), np.union1d(np.array(mothly_edits_users.iloc[2,0]), unionList(np.array(mothly_edits_users.iloc[3:6,0]))))))
-    #dif 4...6  mes con 0..3
-    edit_between_3and6_month.append(len(np.setdiff1d(unionList(np.array(mothly_edits_users.iloc[0:3,0])), np.union1d(np.array(mothly_edits_users.iloc[3,0]), unionList(np.array(mothly_edits_users.iloc[4:7,0]))))))
-    i = 7
-    while i < len(mothly_edits_users):
-        edit_between_3and6_month.append(len(unionList1(np.array(mothly_edits_users.iloc[i-7:i+1,0]))))
-        i = i + 1
-    mothly_edits_users['edit_between_3and6_month'] = edit_between_3and6_month
-    series = pd.Series(mothly_edits_users.edit_between_3and6_month, mothly_edits_users.index.values)
-    return series
-
-def edit_mt_6_month_ago(data,index):
-
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    edit_more_6_month = [0, 0, 0, 0, 0, 0]
-    i = 6
-    while i < len(mothly_edits_users):
-        edit_more_6_month.append(len(np.setdiff1d((np.concatenate(np.array(mothly_edits_users.iloc[0:i-5,0]))), np.concatenate(np.array(mothly_edits_users.iloc[i-5:i+1,0])))))
-        i = i + 1
-    mothly_edits_users['edit_more_6_month'] = edit_more_6_month
-    series = pd.Series(mothly_edits_users.edit_more_6_month, mothly_edits_users.index.values)
-    return series
-
 ########################################################################
 
 # Users
@@ -241,7 +176,9 @@ def users_registered_active(data,index):
 def users_anonymous_active(data,index):
     user_registered=data[data['contributor_name']=='Anonymous']
     monthly_data_anonymous=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
     series = monthly_data_anonymous.apply(lambda x: len(x.contributor_id.unique()))
+    series = series.reindex(new_index, fill_value=0)
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
@@ -558,14 +495,85 @@ def users_first_edit_more_than_6_months_ago(data, index):
         series = series.reindex(index, fill_value=0)
     return series
 
+# This metric counts, per each month X, among the users that have edited in that month X, which ones have edited the last time in month X-1
+def users_last_edit_1_month_ago(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('position') in which the number of each row depending grouping by contributor ID is computed: note that the count isn't restarted until nEdits > 0.
+    cond = users_month_edits['nEdits'] == 0
+    users_month_edits['position'] = np.where(cond, 0, users_month_edits.groupby([cond, 'contributor_id', 'nEdits']).cumcount() + 1)
+# 4) add a new column, 'included', which will contain two possible values: 0 if the user didn't edit in month X or edited in month X but not in month X-1, and 1 if the user edited in month X and made his last edition in month X-1
+    cond1 = ((users_month_edits['position'] == 1) & (users_month_edits['position'].shift() == 1)) & (users_month_edits['contributor_id'] == users_month_edits['contributor_id'].shift())
+    users_month_edits['included'] = np.where(cond1, 1, 0)
+# 5) create series
+    series = pd.Series(users_month_edits.groupby(['timestamp']).sum()['included'], new_index)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+# This metric counts, per each month X, among the users that have edited in that month X, which ones have edited the last time in month X-2 or X-3
+def users_last_edit_2_or_3_months_ago(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('position') in which the number of each row depending grouping by contributor ID is computed: note that the count isn't restarted until nEdits > 0.
+    cond = users_month_edits['nEdits'] == 0
+    users_month_edits['position'] = np.where(cond, 0, users_month_edits.groupby([cond, 'contributor_id', 'nEdits']).cumcount() + 1)
+# 4) add a new column, 'included', which will contain two possible values: 0 if the user didn't edit in month X, or edited in month X, but not in month X-2 or in month X-3, and 1 if the user edited in month X, and made his last edition either in month X-2 or in month X-3
+    cond1 = (users_month_edits['position'] == 1) & ((users_month_edits['position'].shift() == 2) | (users_month_edits['position'].shift() == 3)) & (users_month_edits['contributor_id'] == users_month_edits['contributor_id'].shift())
+    users_month_edits['included'] = np.where(cond1, 1, 0)
+# 5) create series
+    series = pd.Series(users_month_edits.groupby(['timestamp']).sum()['included'], new_index)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+# This metric counts, per each month X, among the users that have edited in that month X, which ones have edited the last time in month X-4, X-5 or X-6
+def users_last_edit_4_or_5_or_6_months_ago(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('position') in which the number of each row depending grouping by contributor ID is computed: note that the count isn't restarted until nEdits > 0.
+    cond = users_month_edits['nEdits'] == 0
+    users_month_edits['position'] = np.where(cond, 0, users_month_edits.groupby([cond, 'contributor_id', 'nEdits']).cumcount() + 1)
+# 4) add a new column, 'included', which will contain two possible values: 0 if the user didn't edit in month X, or edited in month X, but not in month X-4 or in month X-5 or in month X-6, and 1 if the user edited in month X, and made his last edition either in month X-4 or in month X-5 or in month X-6
+    cond1 = (users_month_edits['position'] == 1) & ((users_month_edits['position'].shift() == 4) | (users_month_edits['position'].shift() == 5) | (users_month_edits['position'].shift() == 6)) & (users_month_edits['contributor_id'] == users_month_edits['contributor_id'].shift())
+    users_month_edits['included'] = np.where(cond1, 1, 0)
+# 5) create series
+    series = pd.Series(users_month_edits.groupby(['timestamp']).sum()['included'], new_index)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+# This metric counts, per each month X, among the users that have edited in that month X, which ones have edited the last time in any month > X-6
+def users_last_edit_more_than_6_months_ago(data, index):
+# 1) Get the index of the dataframe to analyze: it must include all the months recorded in the history of the wiki.
+    new_index = data.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('months').index
+# 2) create a dataframe in which we have the cumulative sum of the editions the user has made all along the history of the wiki.
+    users_month_edits =data.groupby(['contributor_id']).apply(lambda x: x.groupby(pd.Grouper(key='timestamp', freq='MS')).size().to_frame('nEdits').reindex(new_index, fill_value=0).cumsum()).reset_index()
+# 3) add a new column to the dataframe ('position') in which the number of each row depending grouping by contributor ID is computed: note that the count isn't restarted until nEdits > 0.
+    cond = users_month_edits['nEdits'] == 0
+    users_month_edits['position'] = np.where(cond, 0, users_month_edits.groupby([cond, 'contributor_id', 'nEdits']).cumcount() + 1)
+# 4) add a new column, 'included', which will contain two possible values: 0 if the user didn't edit in month X or edited in month X but not in any month > X-6, and 1 if the user edited in month X and made his last edition in any month > X-6
+    cond1 = ((users_month_edits['position'] == 1) & (users_month_edits['position'].shift() > 6)) & (users_month_edits['contributor_id'] == users_month_edits['contributor_id'].shift())
+    users_month_edits['included'] = np.where(cond1, 1, 0)
+# 5) create series
+    series = pd.Series(users_month_edits.groupby(['timestamp']).sum()['included'], new_index)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
     series = users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
-
-
 
 
 def users_accum(data, index):
