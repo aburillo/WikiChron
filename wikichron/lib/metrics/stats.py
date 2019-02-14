@@ -624,6 +624,23 @@ def returning_new_editor(data, index):
         returning_new_users = returning_new_users.reindex(index, fill_value=0)
     return returning_new_users
 
+def surviving_new_editor(data, index):
+    data.reset_index(drop=True, inplace=True)
+    registered_users = data[data['contributor_name'] != 'Anonymous']
+    #add up 30 days to the date on which each user registered
+    thirty_days_after_registration = registered_users.groupby(['contributor_id']).agg({'timestamp':'first'}).apply(lambda x: x+d.timedelta(days=30)).reset_index()
+    thirty_days =dict([(i,a) for i, a in zip(thirty_days_after_registration.contributor_id, thirty_days_after_registration.timestamp)])
+    registered_users['thirty_days_after'] = registered_users['contributor_id'].map(thirty_days)
+    registered_users['survival period'] = registered_users['thirty_days_after'].apply(lambda x: x+d.timedelta(days=30))
+    registered_users['edits_in_survival_period'] =(registered_users['timestamp'] >= registered_users['thirty_days_after']) & (registered_users['timestamp'] <= registered_users['survival period'])
+    survival_users = registered_users[registered_users['edits_in_survival_period'] == True]
+    survival_users = survival_users.groupby([pd.Grouper(key='timestamp', freq='MS'), 'contributor_id']).size().to_frame('num_editions_in_survival_period').reset_index()
+    survival_new_users = survival_users.groupby(['contributor_id'])['timestamp'].max().reset_index()
+    survival_new_users = survival_new_users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+    if index is not None:
+        survival_new_users = survival_new_users.reindex(index, fill_value=0)
+    return survival_new_users
+
 ############################ MORE METRICS ON USERS (initial ones) #############################################################################
 
 def users_accum(data, index):
