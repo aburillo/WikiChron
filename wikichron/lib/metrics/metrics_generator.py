@@ -36,58 +36,36 @@ def generate_metrics():
     metrics.append(Metric('edit_mt_6_month_ago', 'Edit more than 6 month ago', MetricCategory.EDITIONS, stats.edit_mt_6_month_ago, ''))
 
     # Users
-
-    # metric 1 (newcommers and reincidents)
-    metrics.append(Metric('users_reincident', 'Reincident users', MetricCategory.USERS, stats.users_reincident, 'users who have made more than one edition, shown in the month in which they reached >1 editions'))
-    metrics.append(Metric('users_new', 'New users', MetricCategory.USERS, stats.users_new, 'Users editing the wiki for the first time'))
-
-    # metric 2
-    metrics.append(Metric('Activity_streak_1', 'Activity streak 1', MetricCategory.USERS, stats.current_streak_this_month, 'Users editing the wiki for 1 month in a row.'))
-    metrics.append(Metric('Activity_streak_2_3', 'Activity streak 2', MetricCategory.USERS, stats.current_streak_2_or_3_months_in_a_row, 'Users editing the wiki for 2 or 3 months in a row'))
-    metrics.append(Metric('Activity_streak_4_6', 'Activity streak 3', MetricCategory.USERS, stats.current_streak_4_or_6_months_in_a_row, 'Users editing the wiki for 4 or 6 months in a row'))
-    metrics.append(Metric('Activity_streak_6', 'Activity streak 4', MetricCategory.USERS, stats.current_streak_more_than_six_months_in_a_row, 'Users editing the wiki for more than 6 months in a row'))
-
-    # metric 3
-    metrics.append(Metric('users_first_edit_between_1_3_months_ago', 'Users first edit 1', MetricCategory.USERS, stats.users_first_edit_between_1_3_months_ago, 'Users whose first edition was between 1 and 3 months ago'))
-    metrics.append(Metric('users_first_edit_between_4_6_months_ago', 'Users first edit 2', MetricCategory.USERS, stats.users_first_edit_between_4_6_months_ago, 'Users whose first edition was between 4 and 6 months ago'))
-    metrics.append(Metric('users_first_edit_more_than_6_months_ago', 'Users first edit 3', MetricCategory.USERS, stats.users_first_edit_more_than_6_months_ago, 'Users whose first edition was more than 6 months ago'))
-
-    # metric 4
-    metrics.append(Metric('users_last_edit_1_month_ago', 'users last edit 1', MetricCategory.USERS, stats.users_last_edit_1_month_ago, 'Users editing in month X whose last edit was in month X-1'))
-    metrics.append(Metric('users_last_edit_2_or_3_months_ago', 'users last edit 2', MetricCategory.USERS, stats.users_last_edit_2_or_3_months_ago, 'Users editing in month X whose last edit was in month X-2 or X-3'))
-    metrics.append(Metric('users_last_edit_4_or_5_or_6_months_ago', 'Users last edit 3, X-5 or X-6', MetricCategory.USERS, stats.users_last_edit_4_or_5_or_6_months_ago, 'Users editing in month X whose last edit was in month X-4, X-5 or X-6'))
-    metrics.append(Metric('users_last_edit_more_than_6_months_ago', 'users last edit 4', MetricCategory.USERS, stats.users_last_edit_more_than_6_months_ago, 'Users editing in month X whose last edit was in any month > X-6'))
-
-    # metric 5
-    metrics.append(Metric('users_edits_between_1_4', 'users #edits 1', MetricCategory.USERS, stats.users_number_of_edits_between_1_and_4, 'Users that have completed between 1 and 4 editions until month X-1 (included)'))
-    metrics.append(Metric('users_edits_between_5_24', 'users #edits 2', MetricCategory.USERS, stats.users_number_of_edits_between_5_and_24, 'Users that have completed between 5 and 24 editions until month X-1 (included)'))
-    metrics.append(Metric('users_edits_between_25_99', 'users #edits 3', MetricCategory.USERS, stats.users_number_of_edits_between_25_and_99, 'Users that have completed between 25 and 99 editions until month X-1 (included)'))
-    metrics.append(Metric('users_edits_highEq_100', 'users #edits 4', MetricCategory.USERS, stats.users_number_of_edits_highEq_100, 'Users that have completed >= 100 editions until month X-1 (included)'))
-
-# metric 6: wikimedia
-# metric 7
-# metric 8
-
-    # metrics 10 and 9: users editing main, template and talk pages
-    metrics.append(Metric('users_main_page', 'Users main page', MetricCategory.USERS, stats.users_main_page, 'Users who have edited a main page'))
-    metrics.append(Metric('users_template_page', 'Users template page', MetricCategory.USERS, stats.users_template_page, 'Users who have edited a template page'))
-    metrics.append(Metric('talk_page_users', 'Users talk page', MetricCategory.USERS, stats.talk_page_users, 'Users that have edited a talk page.'))
-
-    # users new (registered & anonymous)
+    metrics.append(Metric('users_edits_between_1_4', 'users # editions between 1 & 4', MetricCategory.USERS, stats.users_number_of_edits_between_1_and_4, 'users according to their activity level: to be included in this category in month X, they must have completed between 1 and 4 editions until month X-1 (included)'))
+    metrics.append(Metric('users_edits_between_5_24', 'users # editions between 5 & 24', MetricCategory.USERS, stats.users_number_of_edits_between_5_and_24, 'users according to their activity level: to be included in this category in month X, they must have completed between 5 and 24 editions until month X-1 (included)'))
+    metrics.append(Metric('users_edits_between_25_99', 'users # editions between 25 & 99', MetricCategory.USERS, stats.users_number_of_edits_between_25_and_99, 'users according to their activity level: to be included in this category in month X, they must have completed between 25 and 99 editions until month X-1 (included)'))
+    metrics.append(Metric('users_edits_highEq_100', 'users # editions >=100', MetricCategory.USERS, stats.users_number_of_edits_highEq_100, 'users according to their activity level: to be included in this category in month X, they must have completed >= 100 editions until month X-1 (included)'))
+    metrics.append(Metric('users_reincident', 'Reincident users', MetricCategory.USERS, stats.users_reincident, 'users who have made more than one edition, distributed per month in which they reached >1 editions'))
+    metrics.append(Metric('users_registered_new', 'registered Active users >4 editions', MetricCategory.USERS, stats.users_registered_active_2, 'Registered users distributed by the month(s) in which they have made more than 4 editions'))
+    metrics.append(Metric('users_active_more_than_4', 'Acive users >4 editions', MetricCategory.USERS, stats.users_active_more_than_4, 'users distributed by the month(s) in which they have made more than 4 editions'))
+    metrics.append(Metric('users_new', 'New users', MetricCategory.USERS, stats.users_new, 'Users who have made at least one edition grouped by the month they did their first edit.'))
+    metrics.append(Metric('users_main_page', 'Users editing a main page', MetricCategory.USERS, stats.users_main_page, 'Users who have edited a main page'))
+    metrics.append(Metric('users_template_page', 'Users editing a template page', MetricCategory.USERS, stats.users_template_page, 'Users who have edited a template page'))
+    metrics.append(Metric('users_active_registered', 'Active registered users', MetricCategory.USERS, stats.users_registered_active, 'New users registration per month who have made at least one edition.'))
+    metrics.append(Metric('users_active_anonymous', 'Active anonymous users', MetricCategory.USERS, stats.users_anonymous_active, 'New users registration per month who have made at least one edition.'))
+    metrics.append(Metric('users_less_than_three_months', 'Users with less than 3 months old last edit', MetricCategory.USERS, stats.users_less_than_three_months, 'users per month whose last edition is less than 3 months old.'))
+    metrics.append(Metric('users_more_than_three_months', 'Users with more than 3 months old last edit', MetricCategory.USERS, stats.users_more_than_three_months, 'users per month whose last edition is more than 3 months old.'))
+    metrics.append(Metric('users_more_than_six_months', 'Users with more than six months old last edit', MetricCategory.USERS, stats.edits_users_more_than_six_months, 'users per month whose last edition is more than six months old.'))
+    metrics.append(Metric('users_between_more_than_three_and_less_or_equals_six_months', 'Edits users between more than three and less or equals six months old', MetricCategory.USERS, stats.edits_users_between_three_six_months, 'users per month whose last edition is between more than three and less or equals six months old.'))
+    metrics.append(Metric('talk_page_users', 'User Edit Talk Page', MetricCategory.USERS, stats.talk_page_users, 'Users that have edited a talk page.'))
+    metrics.append(Metric('current streak this month', 'Current streak start this month', MetricCategory.USERS, stats.current_streak_this_month, 'Users whose current streak start this month'))
+    metrics.append(Metric('current streak 2 or 3 months in a row', 'Current streak of 2 or 3 months in a row', MetricCategory.USERS, stats.current_streak_2_or_3_months_in_a_row, 'Users whose current streak is two or three months in a row including the current month'))
+    metrics.append(Metric('current streak between 4 or 6 months in a row', 'Current streak between 4 or 6 months in a row', MetricCategory.USERS, stats.current_streak_4_or_6_months_in_a_row, 'Users whose current streak is between four or six months in a row including the current month'))
+    metrics.append(Metric('current streak more than 6 months in a row', 'Current streak more than 6 months in a row', MetricCategory.USERS, stats.current_streak_more_than_six_months_in_a_row, 'Users whose current streak is more than six months in a row including the current month'))
     metrics.append(Metric('users_new_registered', 'New registered users', MetricCategory.USERS, stats.users_new_registered, 'New users registration per month who have made at least one edition.'))
     metrics.append(Metric('users_new_anonymous', 'New anonymous users', MetricCategory.USERS, stats.users_new_anonymous, 'Anonymous users who made at least one edition grouped by the month they did their first edit. Anonymous are identified by their ip.'))
-
-    #users active 
     metrics.append(Metric('users_active', 'Active users', MetricCategory.USERS, stats.users_active, 'Number of users who have made at least one contribution for each month.'))
-    metrics.append(Metric('users_active_registered', 'Active registered users', MetricCategory.USERS, stats.users_registered_active, 'New registered users who have made at least one edition.'))
-    metrics.append(Metric('users_active_anonymous', 'Active anonymous users', MetricCategory.USERS, stats.users_anonymous_active, 'New users who have made at least one edition.'))
-    metrics.append(Metric('users_registered_active_>4_edits', 'users >4 edits 1', MetricCategory.USERS, stats.users_registered_active_2, 'Registered users distributed by the month(s) in which they have made more than 4 editions'))
-    metrics.append(Metric('users_active_more_than_4', 'users >4 edits 2', MetricCategory.USERS, stats.users_active_more_than_4, 'users (anonymous and registered) distributed by the month(s) in which they have made more than 4 editions'))
-
-    #total users (registered & anonymous)
     metrics.append(Metric('users_accum', 'Total users', MetricCategory.USERS, stats.users_accum, 'Users who have made at least one edition accumulated at every month.'))
     metrics.append(Metric('users_registered_accum', 'Total registered users', MetricCategory.USERS, stats.users_registered_accum, 'Total registered users at every month. Note that users have to have made at least one edition and they have to be logged with their account when they did that edition.'))
     metrics.append(Metric('users_anonymous_accum', 'Total anonymous users', MetricCategory.USERS, stats.users_anonymous_accum, 'Anonymous users who have made at least one edition accumulated at every month. Anonymous are identified by their ip.'))
+    metrics.append(Metric('users_first_edit_between_1_3_months_ago', 'Users first edit between 1 and 3 months ago', MetricCategory.USERS, stats.users_first_edit_between_1_3_months_ago, 'Users whose first edition was between 1 and 3 months ago'))
+    metrics.append(Metric('users_first_edit_between_4_6_months_ago', 'Users first edit between 4 and 6 months ago', MetricCategory.USERS, stats.users_first_edit_between_4_6_months_ago, 'Users whose first edition was between 4 and 6 months ago'))
+    metrics.append(Metric('users_first_edit_more_than_6_months_ago', 'Users first edit more than 6 months ago', MetricCategory.USERS, stats.users_first_edit_more_than_6_months_ago, 'Users whose first edition was more than 6 months ago'))
 
     # RATIO
     metrics.append(Metric('edits_per_users_monthly', 'Edits per users', MetricCategory.RATIOS, stats.edits_per_users_monthly, 'Number of edits for every month per number of active users that month'))
