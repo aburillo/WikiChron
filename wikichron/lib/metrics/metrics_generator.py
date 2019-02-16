@@ -30,10 +30,6 @@ def generate_metrics():
     metrics.append(Metric('edits_user_talk', 'Edits in user talk', MetricCategory.EDITIONS, stats.edits_user_talk, 'Editions to user discussion pages'))
     metrics.append(Metric('edits_accum', 'Total edits in pages', MetricCategory.EDITIONS, stats.edits_accum, 'Total editions to any part of the wiki accumulated at every month'))
     metrics.append(Metric('edits_main_content_accum', 'Total edits in articles', MetricCategory.EDITIONS, stats.edits_main_content_accum, 'Editions to articles accumulated at every month'))
-    metrics.append(Metric('edits_last_month_ago', 'Edits last month', MetricCategory.EDITIONS, stats.edit_last_month, ''))
-    metrics.append(Metric('edit_2or3_month_ago', 'Edit 2 or 3 month ago', MetricCategory.EDITIONS, stats.edit_2or3_month_ago, ''))
-    metrics.append(Metric('edit_between_3and6_month_ago', 'Edit between 3 and 6 month ago', MetricCategory.EDITIONS, stats.edit_between_3and6_month_ago, ''))
-    metrics.append(Metric('edit_mt_6_month_ago', 'Edit more than 6 month ago', MetricCategory.EDITIONS, stats.edit_mt_6_month_ago, ''))
 
     # Users
 
@@ -55,7 +51,7 @@ def generate_metrics():
     # metric 4
     metrics.append(Metric('users_last_edit_1_month_ago', 'users last edit 1', MetricCategory.USERS, stats.users_last_edit_1_month_ago, 'Users editing in month X whose last edit was in month X-1'))
     metrics.append(Metric('users_last_edit_2_or_3_months_ago', 'users last edit 2', MetricCategory.USERS, stats.users_last_edit_2_or_3_months_ago, 'Users editing in month X whose last edit was in month X-2 or X-3'))
-    metrics.append(Metric('users_last_edit_4_or_5_or_6_months_ago', 'Users last edit 3, X-5 or X-6', MetricCategory.USERS, stats.users_last_edit_4_or_5_or_6_months_ago, 'Users editing in month X whose last edit was in month X-4, X-5 or X-6'))
+    metrics.append(Metric('users_last_edit_4_or_5_or_6_months_ago', 'Users last edit 3', MetricCategory.USERS, stats.users_last_edit_4_or_5_or_6_months_ago, 'Users editing in month X whose last edit was in month X-4, X-5 or X-6'))
     metrics.append(Metric('users_last_edit_more_than_6_months_ago', 'users last edit 4', MetricCategory.USERS, stats.users_last_edit_more_than_6_months_ago, 'Users editing in month X whose last edit was in any month > X-6'))
 
     # metric 5
