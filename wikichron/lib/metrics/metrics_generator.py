@@ -59,6 +59,7 @@ def generate_metrics():
     metrics.append(Metric('current streak more than 6 months in a row', 'Current streak more than 6 months in a row', MetricCategory.USERS, stats.current_streak_more_than_six_months_in_a_row, 'Users whose current streak is more than six months in a row including the current month'))
 ######Metrics wikimedia
     metrics.append(Metric('returning new editor', 'Returning new editor', MetricCategory.USERS, stats.returning_new_editor, 'New editor who completes at least two edit sessions within 7 days afte registering.'))
+    metrics.append(Metric('returning new editor(%)', 'Returning new editor (%)', MetricCategory.USERS, stats.returning_new_editor_new_users, 'Percentage of new users who are returning'))
     metrics.append(Metric('surviving new editor', 'Surviving new editor', MetricCategory.USERS, stats.surviving_new_editor, ''))
 ########################
     metrics.append(Metric('users_new_registered', 'New registered users', MetricCategory.USERS, stats.users_new_registered, 'New users registration per month who have made at least one edition.'))

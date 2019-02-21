@@ -194,6 +194,7 @@ def users_new(data, index):
 
 #users who make their second edition in the wiki (we want the count for this kind of users per month)
 def users_reincident(data, index):
+    data = data[data['contributor_name'] != 'Anonymous']
     data['test_duplicated'] = data['contributor_id'].duplicated()
     users_reincident = data[data['test_duplicated'] == True]
 #determine in which month each user performed their second edition-> can be the same month as the first one
@@ -587,35 +588,42 @@ def users_first_edit_more_than_6_months_ago(data, index):
     return series
 	
 ############################ METRICS WIKIMEDIA ##########################################
+def activity_session(data, time_session):
+    #get the timestamp and contributor_id and group by contributor_id
+    timestamp_and_contributor_id = data[['timestamp', 'contributor_id']].groupby(['contributor_id'])
+    #displace the timestamp a position 
+    displace_timestamp = timestamp_and_contributor_id.apply(lambda x: x.shift())
+    data['displace_timestamp'] = displace_timestamp['timestamp']
+    #compare the origin timestamp with the displace_timestamp
+    data['comp'] = (data.timestamp-data.displace_timestamp)
+    #convert to seconds and replace the NAT for 31 because the NAT indicate the first edition
+    data['comp'] = data['comp'].apply(lambda y: y.total_seconds()/60).fillna(time_session+1)
+    #take the edit sessions
+    edits_sessions = data[(data['comp']>time_session) ]
+    num_edits_sessions = edits_sessions.groupby([pd.Grouper(key='timestamp', freq='MS'), 'contributor_id']).size()
+    return num_edits_sessions
+
+def x_time_after_registration(data, time):
+    #to order by date
+    data = data.sort_values(['timestamp'])
+    #add up x time to the date on which each user registered
+    x_time_after_registration = data.groupby(['contributor_id']).agg({'timestamp':'first'}).apply(lambda x: x+d.timedelta(days=time)).reset_index()
+    #create a dictionary whose key is contributor_id and its value is timestamp (this timestamp is the date on which each user registered + time)
+    x_time =dict([(i,a) for i, a in zip(x_time_after_registration.contributor_id, x_time_after_registration.timestamp)])
+    #add the dictionary to the dataframe
+    data['x_time_after'] = data['contributor_id'].map(x_time)
+    return data
 
 def returning_new_editor(data, index):
     data.reset_index(drop=True, inplace=True)
     #remove anonymous users
     registered_users = data[data['contributor_name'] != 'Anonymous']
-    #add up 7 days to the date on which each user registered
-    seven_days_after_registration = registered_users.groupby(['contributor_id']).agg({'timestamp':'first'}).apply(lambda x: x+d.timedelta(days=7)).reset_index()
-    #create a dictionary whose key is contributor_id and its value is timestamp (this timestamp is the date on which each user registered + 7)
-    seven_days =dict([(i,a) for i, a in zip(seven_days_after_registration.contributor_id, seven_days_after_registration.timestamp)])
-    #add the dictionary to the dataframe
-    registered_users['seven_days_after'] = registered_users['contributor_id'].map(seven_days)
+    registered_users = x_time_after_registration(registered_users, 7)
     #edits of each user within 7 days of being registered
-    registered_users['editions_within_seven_days'] = registered_users['timestamp'] <=registered_users['seven_days_after']
+    registered_users['editions_within_seven_days'] = registered_users['timestamp'] <=registered_users['x_time_after']
     registered_users = registered_users[registered_users['editions_within_seven_days'] == True]
-    #to order by date
-    registered_users = registered_users.sort_values(['timestamp'])
-    #get the timestamp and contributor_id and group by contributor_id
-    timestamp_and_contributor_id = registered_users[['timestamp', 'contributor_id']].groupby(['contributor_id'])
-    #displace the timestamp a position 
-    displace_timestamp = timestamp_and_contributor_id.apply(lambda x: x.shift())
-    registered_users['displace_timestamp'] = displace_timestamp['timestamp']
-    #compare the origin timestamp with the displace_timestamp
-    registered_users['comp'] = (registered_users.timestamp-registered_users.displace_timestamp)
-    #convert to seconds and replace the NAT for 31 because the NAT indicate the first edition
-    registered_users['comp'] = registered_users['comp'].apply(lambda y: y.total_seconds()/60).fillna(31)
-    #take the edit sessions
-    edits_sessions = registered_users[(registered_users['comp']>30) ]
-    num_edits_sessions = edits_sessions.groupby([pd.Grouper(key='timestamp', freq='MS'), 'contributor_id']).size()
     #users with at least two editions
+    num_edits_sessions = activity_session(registered_users, 60)
     returning_users = num_edits_sessions[num_edits_sessions >1].to_frame('returning_users').reset_index()
     #minimum month in which each user has made two editions
     returning_new_users = returning_users.groupby(['contributor_id'])['timestamp'].min().reset_index()
@@ -623,16 +631,22 @@ def returning_new_editor(data, index):
     if index is not None:
         returning_new_users = returning_new_users.reindex(index, fill_value=0)
     return returning_new_users
+	
+def returning_new_editor_new_users(data, index):
+    returning = returning_new_editor(data, index)
+    new_users = users_new_registered(data, index)
+    series = ((returning / new_users) * 100).dropna()
+    print(series)
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
 
 def surviving_new_editor(data, index):
     data.reset_index(drop=True, inplace=True)
     registered_users = data[data['contributor_name'] != 'Anonymous']
-    #add up 30 days to the date on which each user registered
-    thirty_days_after_registration = registered_users.groupby(['contributor_id']).agg({'timestamp':'first'}).apply(lambda x: x+d.timedelta(days=30)).reset_index()
-    thirty_days =dict([(i,a) for i, a in zip(thirty_days_after_registration.contributor_id, thirty_days_after_registration.timestamp)])
-    registered_users['thirty_days_after'] = registered_users['contributor_id'].map(thirty_days)
-    registered_users['survival period'] = registered_users['thirty_days_after'].apply(lambda x: x+d.timedelta(days=30))
-    registered_users['edits_in_survival_period'] =(registered_users['timestamp'] >= registered_users['thirty_days_after']) & (registered_users['timestamp'] <= registered_users['survival period'])
+    registered_users = x_time_after_registration(registered_users, 30)
+    registered_users['survival period'] = registered_users['x_time_after'].apply(lambda x: x+d.timedelta(days=30))
+    registered_users['edits_in_survival_period'] =(registered_users['timestamp'] >= registered_users['x_time_after']) & (registered_users['timestamp'] <= registered_users['survival period'])
     survival_users = registered_users[registered_users['edits_in_survival_period'] == True]
     survival_users = survival_users.groupby([pd.Grouper(key='timestamp', freq='MS'), 'contributor_id']).size().to_frame('num_editions_in_survival_period').reset_index()
     survival_new_users = survival_users.groupby(['contributor_id'])['timestamp'].max().reset_index()
