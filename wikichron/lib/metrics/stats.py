@@ -635,10 +635,7 @@ def returning_new_editor(data, index):
 def returning_new_editor_new_users(data, index):
     returning = returning_new_editor(data, index)
     new_users = users_new_registered(data, index)
-    series = ((returning / new_users) * 100).dropna()
-    print(series)
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
+    series = ((returning / new_users) * 100)
     return series
 
 def surviving_new_editor(data, index):
@@ -654,6 +651,14 @@ def surviving_new_editor(data, index):
     if index is not None:
         survival_new_users = survival_new_users.reindex(index, fill_value=0)
     return survival_new_users
+	
+def surviving_new_editor_new_users(data, index):
+    surviving = surviving_new_editor(data, index)
+    new_users = users_new_registered(data, index)
+    new_users_last_month = new_users.shift()
+    series = ((surviving / new_users_last_month) * 100)
+    return series
+	
 
 ############################ MORE METRICS ON USERS (initial ones) #############################################################################
 
