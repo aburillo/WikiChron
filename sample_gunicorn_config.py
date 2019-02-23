@@ -1,4 +1,4 @@
-bind = ':80'
+bind = ':88'
 timeout = 1200
 proc_name = 'WikiChron'
 loglevel = 'debug'
