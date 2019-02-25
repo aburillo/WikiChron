@@ -244,6 +244,7 @@ def users_new(data, index):
 #users who make their second edition in the wiki (we want the count for this kind of users per month)
 def users_reincident(data, index):
     data['test_duplicated'] = data['contributor_id'].duplicated()
+    data = data[data['contributor_name'] != 'Anonymous']
     users_reincident = data[data['test_duplicated'] == True]
 #determine in which month each user performed their second edition-> can be the same month as the first one
 #1) get number of editions per month for every user
