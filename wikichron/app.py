@@ -54,7 +54,7 @@ data_dir = os.environ['WIKICHRON_DATA_DIR']
 
 # global app config
 APP_HOSTNAME = 'http://wikichron.science';
-port = 8881;
+port = 8880;
 wikichron_base_pathname = '/app/';
 #~ assets_url_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets');
 assets_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets');
@@ -120,6 +120,7 @@ else: # load piwik only in production:
 
 
 def get_available_wikis(data_dir):
+    print(os.path.join(data_dir, 'wikis.json'))
     wikis_json_file = open(os.path.join(data_dir, 'wikis.json'))
     wikis = json.load(wikis_json_file)
     return wikis

@@ -23,6 +23,7 @@ from .metrics import stats
 global data_dir;
 data_dir = os.getenv('WIKICHRON_DATA_DIR', 'data')
 
+#No cambiada
 def get_dataframe_from_csv(csv):
     """ Read and parse a csv and return the corresponding pandas dataframe"""
     print('Loading csv for ' + csv)
@@ -38,12 +39,12 @@ def get_dataframe_from_csv(csv):
     df.index.name = csv
     return df
 
-
+#No cambiada
 def get_available_metrics():
     """ Return a list of the currently available metrics. """
     return _available_metrics
 
-
+#No cambiada
 def remove_bots_activity(df, bots_ids):
     """
         Filter out bots activity from pandas dataframe.
@@ -57,6 +58,7 @@ def remove_bots_activity(df, bots_ids):
     return df[~df['contributor_id'].isin(bots)]
 
 
+#No cambiada
 def prepare_data(df):
     """
         Prepare data in the correct input format for the metric
@@ -68,7 +70,7 @@ def prepare_data(df):
     """
     return df.sort_values(by='timestamp', inplace=True)
 
-
+#No cambiada
 def compute_metrics_on_dataframe(metrics, df):
     """
         Get the requested metrics computed on a dataframe in relative dates.

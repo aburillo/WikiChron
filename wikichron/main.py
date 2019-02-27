@@ -39,16 +39,16 @@ def extract_metrics_objs_from_metrics_codes(metric_codes):
     metrics = [ lib.metrics_dict[metric] for metric in metric_codes ]
     return metrics
 
-
+#No cambiada (devuelve el dataframe limpio)
 @cache.memoize(timeout=3600)
 def load_data(wiki):
     print(wiki)
-    df = lib.get_dataframe_from_csv(wiki['data'])
-    lib.prepare_data(df)
-    df = clean_up_bot_activity(df, wiki)
+    df = lib.get_dataframe_from_csv(wiki['data']) #carga el csv
+    lib.prepare_data(df) #ordena el dataframe
+    df = clean_up_bot_activity(df, wiki) #elimina los bots
     return df
 
-
+#No cambiada 
 def clean_up_bot_activity(df, wiki):
     if 'botsids' in wiki:
         return lib.remove_bots_activity(df, wiki['botsids'])
@@ -56,7 +56,7 @@ def clean_up_bot_activity(df, wiki):
         warn("Warning: Missing information of bots ids. Note that graphs can be polluted of non-human activity.")
         return df
 
-
+#visto y tendremos que cambiarlo
 def compute_data(dataframes, metrics):
     """ Load analyzed data by every metric for every dataframe and store it in data[] """
 
@@ -64,6 +64,7 @@ def compute_data(dataframes, metrics):
         #~ return [ lib.compute_metric_on_dataframes(metric, dataframes) for metric in metrics]
     #~ else: # relative time index
     metrics_by_wiki = []
+    #por cada wiki te hace el calculo de las metricas seleccionadas y lo mete en una lista.
     for df in dataframes:
         metrics_by_wiki.append(lib.compute_metrics_on_dataframe(metrics, df))
 
@@ -75,7 +76,7 @@ def compute_data(dataframes, metrics):
 
     return wiki_by_metrics
 
-
+#No cambiada
 # returns data[metric][wiki]
 @cache.memoize()
 def load_and_compute_data(wikis, metrics):
@@ -97,6 +98,7 @@ def load_and_compute_data(wikis, metrics):
     print(' * [Timing] Calculations : {} seconds'.format(time_end_calculations) )
     return data
 
+#vista y hay que cambiar la parte de la union de los indices.
 @cache.memoize()
 def generate_longest_time_axis(list_of_selected_wikis, relative_time):
     """ Generate time axis index of the oldest wiki """
@@ -106,19 +108,21 @@ def generate_longest_time_axis(list_of_selected_wikis, relative_time):
     #  covers all the lifespan of all wikis.
     # Otherwise, wikis lifespan for different dates which are not
     #  contained in the lifespan of the oldest wiki would be lost
+    #coge el index de cada wiki y los une. 
     unified_datetime_index = functools.reduce(
                             lambda index_1, index_2: index_1.union(index_2),
                             map(lambda wiki: wiki.index, list_of_selected_wikis))
+    #te lo muestra desde el nacimiento de la wiki del 0 a n o por fechas
     if relative_time:
         time_axis = list(range(0, len(unified_datetime_index)))
     else:
         time_axis = unified_datetime_index
     return time_axis
 
-
+#Vista y hay que cambiarla
 def generate_graphs(data, metrics, wikis, relative_time):
     """ Turn over data[] into plotly graphs objects and store it in graphs[] """
-
+    #el bucle de la i es el externo y el de la j el interno.
     graphs_list = [[None for j in range(len(wikis))] for i in range(len(metrics))]
 
     for metric_idx in range(len(metrics)):

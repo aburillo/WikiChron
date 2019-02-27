@@ -13,15 +13,7 @@
 import pandas as pd
 import numpy as np
 import math
-
-# CONSTANTS
-MINIMAL_USERS_GINI = 20
-MINIMAL_USERS_PERCENTIL_MAX_5 = 100
-MINIMAL_USERS_PERCENTIL_MAX_10 = 50
-MINIMAL_USERS_PERCENTIL_MAX_20 = 25
-MINIMAL_USERS_PERCENTIL_5_10 = 100
-MINIMAL_USERS_PERCENTIL_10_20 = 50
-MINIMAL_USERS_RATIO_10_90 = 10
+from dateutil.relativedelta import relativedelta
 
 
 def calculate_index_all_months(data):
@@ -29,90 +21,7 @@ def calculate_index_all_months(data):
     index = monthly_data.size().index
     return index
 
-# Pages
 
-
-def pages_new(data, index):
-    # We use the fact that data is sorted first by page_title and them by revision_id
-    # If we drop publicates we will get the first revision for each page_title, which
-    #  corresponds with the date it was created.
-    pages = data.drop_duplicates('page_id')
-    series = pages.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-def pages_accum(data, index):
-    return (pages_new(data, index).cumsum())
-
-
-def pages_main_new(data, index):
-    pages = data.drop_duplicates('page_id')
-    main_pages = pages[pages['page_ns'] == 0]
-    series = main_pages.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-def pages_main_accum(data, index):
-    return (pages_main_new(data, index).cumsum())
-
-
-def pages_edited(data, index):
-    month_data = data.groupby([pd.Grouper(key='timestamp', freq='MS')])
-    series = monthly_data.apply(lambda x: len(x.page_id.unique()))
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-def main_edited(data, index):
-    main_pages = data[data['page_ns'] == 0]
-    monthly_data = main_pages.groupby([pd.Grouper(key='timestamp', freq='MS')])
-    series = monthly_data.apply(lambda x: len(x.page_id.unique()))
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-########################################################################
-
-# Editions
-
-
-def edits(data, index):
-    monthly_data = data.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    series = monthly_data.size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-def edits_accum(data, index):
-    return (edits(data, index).cumsum())
-
-
-def edits_main_content(data, index):
-    edits_main_data = data[data['page_ns'] == 0]
-    return (edits(edits_main_data, index))
-
-
-def edits_main_content_accum(data, index):
-    return (edits_main_content(data, index).cumsum())
-
-
-def edits_article_talk(data, index):
-    edits_talk_data = data[data['page_ns'] == 1]
-    return (edits(edits_talk_data, index))
-
-
-def edits_user_talk(data, index):
-    edits_talk_data = data[data['page_ns'] == 3]
-    return (edits(edits_talk_data, index))
-
-
-########################################################################
 
 # Users
 
@@ -181,7 +90,7 @@ def filter_users_last_edition(data, index, x):
     return series
 
 
-#<<<<<<< HEAD
+
 #### Helper metric 5 ####
 
 # this helper functions filters the editors according to their number of editions, which can be in a range: [x, y] or >=x, with x and y specified by the caller functions
@@ -219,27 +128,7 @@ def filter_users_pageNS(data, index, page_ns):
 ###### Callable Functions ######
 
 ############################ METRIC 1: USERS NEW AND USERS REINCIDENT ###############################################################
-#=======
 #this metric is the same as the users_active, but getting rid of anonymous users	
-def users_registered_active(data, index):
-    # get rid of anonymous users and procceed as it was done in the previous metric.
-    user_registered = data[data['contributor_name'] != 'Anonymous']
-    return users_active(user_registered, index)
-
-
-# this metric is the complementary to users_registered_active: now, we get rid of registered users and focus on anonymous users.
-def users_anonymous_active(data, index):
-    user_anonymous = data[data['contributor_name'] == 'Anonymous']
-    return users_active(user_anonymous, index)
-
-#>>>>>>> oficial-master
-
-def users_new(data, index):
-    users = data.drop_duplicates('contributor_id')
-    series = users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
 
 #users who make their second edition in the wiki (we want the count for this kind of users per month)
 def users_reincident(data, index):
@@ -261,138 +150,67 @@ def users_reincident(data, index):
         series = series.reindex(index, fill_value=0)
     return series
 
-############################ METRIC USERS ACTIVE ####################################################################################
-
-#users_registered_active according to version 2 definition (active -> more than 4 edits)
-def users_registered_active_2(data,index):
-    users_registered = data[data['contributor_name'] != 'Anonymous']
-# get the number of edits each user has done each month
-    monthly_edits = users_registered.groupby([pd.Grouper(key='timestamp', freq='MS'), 'contributor_name']).size()
-# filter users with number >= requested, and make timestamp and contributor_name to be COLUMNS, instead of part of the index
-    monthly_edits_filtered = monthly_edits[monthly_edits > 4].to_frame(name='pages_edited').reset_index()
-# get how many users with >=5 editions exist for each month
-    series = monthly_edits_filtered.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-#metric which gets the monthly count of users (registered or not) who have contributed in more than 4 editions to the wiki, during that month-> same as users_registered_active_2, but counting anonymous users
-def users_active_more_than_4(data, index):
-    monthly = data.groupby(pd.Grouper(key='timestamp', freq = 'MS'))
-    series = monthly.apply(lambda x: len(x.groupby(['contributor_id']).size().where(lambda y: y>4).dropna()))
-    return series
-
-#users active according to version one: those who have contributed to the wiki in one edition during a month (anonymous are included).
-def users_active(data, index):
-    monthly_data = data.groupby(pd.Grouper(key='timestamp', freq='MS'))
-# per each month, get rid  of duplicated contributor_ids and count.
-    series = monthly_data.apply(lambda x: len(x.contributor_id.unique()))
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-#this metric is the same as the users_active, but getting rid of anonymous users	
-def users_registered_active(data,index):
-# get rid of anonymous users and procceed as it was done in the previous metric.
-    user_registered=data[data['contributor_name']!='Anonymous']
-    monthly_data_registered=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    series = monthly_data_registered.apply(lambda x: len(x.contributor_id.unique()))
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-# this metric is the complementary to users_registered_active: now, we get rid of registered users and focus on anonymous users.
-def users_anonymous_active(data,index):
-    user_registered=data[data['contributor_name']=='Anonymous']
-    monthly_data_anonymous=user_registered.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    series = monthly_data_anonymous.apply(lambda x: len(x.contributor_id.unique()))
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
 
 ############################ METRIC 2 #################################################################################################
+def add_x_months(data, months):
+    return data['timestamp'].apply(lambda x: x + relativedelta(months = +months))
 
+def displace_x_months(data, months):
+    return data.shift(months)
+	
 def current_streak_this_month(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_this_month = []
-    current_streak_this_month.append(len(mothly_edits_users.iloc[0,0]))
-    i = 1
-    while i < len(mothly_edits_users):
-        current_month = np.array(mothly_edits_users.iloc[i,0])
-        last_month = np.array(mothly_edits_users.iloc[i-1,0])
-        current_streak_this_month.append(len(np.setdiff1d(current_month, last_month)))
-        i = i +1
-    mothly_edits_users['current_streak_this_month'] = current_streak_this_month
-    series = pd.Series(mothly_edits_users.current_streak_this_month, mothly_edits_users.index.values)
+    mothly = data.groupby(['contributor_id', pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    mothly['add_one_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +1))
+    group_users = mothly[['contributor_id', 'add_one_month']].groupby(['contributor_id'])
+    displace_a_month = group_users['add_one_month'].shift()
+    mothly['displace']= displace_a_month
+    streak_start_this_month = mothly[mothly['displace'] != mothly['timestamp']]
+    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
 
 
 def current_streak_2_or_3_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_2_or_3_months_in_a_row = []
-    current_streak_2_or_3_months_in_a_row.append(0)
-    intersectList = lambda l: set(l[0]) & set(l[1])
-    i=1
-    while i < 3:
-        two_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-1:i+1, 0]))
-        current_streak_2_or_3_months_in_a_row.append(len(two_months_in_a_row))
-        i = i + 1
-    i = 3
-    while i < len(mothly_edits_users):
-        two_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-1:i+1, 0]))
-        month_4 = np.array(mothly_edits_users.iloc[i-3,0])
-        current_streak_2_or_3_months_in_a_row.append(len(two_months_in_a_row.difference(month_4)))
-        i = i + 1
-    mothly_edits_users['current_streak_2_or_3_months_in_a_row'] = current_streak_2_or_3_months_in_a_row
-    series = pd.Series(mothly_edits_users.current_streak_2_or_3_months_in_a_row, mothly_edits_users.index.values)
+    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    mothly['add_one_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +1))
+    mothly['add_three_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +3))
+    group_users = mothly[['contributor_id', 'add_one_month', 'add_three_month']].groupby(['contributor_id'])
+    displace_a_month = group_users['add_one_month'].shift()
+    displace_three_month = group_users['add_three_month'].shift(3)
+    mothly['displace_one_month']= displace_a_month
+    mothly['displace_three_month']= displace_three_month
+    streak_start_this_month = mothly[(mothly['displace_one_month'] == mothly['timestamp']) & (mothly['displace_three_month'] != mothly['timestamp'])]
+    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
 
 
 def current_streak_4_or_6_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_between_4_6_months = []
-    current_streak_between_4_6_months = current_streak_between_4_6_months + [0,0,0]
-    intersectList = lambda l: set(l[0]) & set(l[1]) & set(l[2]) & set(l[3])
-    i=3
-    while i < 6:
-        four_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-3:i+1, 0]))
-        current_streak_between_4_6_months.append(len(four_months_in_a_row))
-        i = i + 1
-    i = 6
-    while i < len(mothly_edits_users):
-        four_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-3:i+1, 0]))
-        month_7 = np.array(mothly_edits_users.iloc[i-6,0])
-        current_streak_between_4_6_months.append(len(four_months_in_a_row.difference(month_7)))
-        i = i + 1
-    mothly_edits_users['current_streak_between_4_6_months'] = current_streak_between_4_6_months
-    series = pd.Series(mothly_edits_users.current_streak_between_4_6_months, mothly_edits_users.index.values)
+    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    mothly['add_three_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +3))
+    mothly['add_six_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +6))
+    group_users = mothly[['contributor_id', 'add_three_month', 'add_six_month']].groupby(['contributor_id'])
+    displace_three_month = group_users['add_three_month'].shift(3)
+    displace_six_month = group_users['add_six_month'].shift(6)
+    mothly['displace_three_month']= displace_three_month
+    mothly['displace_six_month']= displace_six_month
+    streak_start_this_month = mothly[(mothly['displace_three_month'] == mothly['timestamp']) & (mothly['displace_six_month'] != mothly['timestamp'])]
+    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
 
 
 def current_streak_more_than_six_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_more_6_months = []
-    current_streak_more_6_months = current_streak_more_6_months + [0,0,0,0,0,0]
-    i = 6
-    intersectList = lambda l: set(l[0]) & set(l[1]) & set(l[2]) & set(l[3]) & set(l[4]) & set(l[5]) & set(l[6])
-    while i < len(mothly_edits_users):
-        six_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-6:i+1, 0]))
-        current_streak_more_6_months.append(len(six_months_in_a_row))
-        i = i + 1
-    mothly_edits_users['current_streak_more_6_months'] = current_streak_more_6_months
-    series = pd.Series(mothly_edits_users.current_streak_more_6_months, mothly_edits_users.index.values)
+    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    mothly['add_six_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +6))
+    group_users = mothly[['contributor_id', 'add_six_month']].groupby(['contributor_id'])
+    displace_six_month = group_users['add_six_month'].shift(6)
+    mothly['displace_six_month']= displace_six_month
+    streak_start_this_month = mothly[mothly['displace_six_month'] == mothly['timestamp']]
+    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
@@ -463,270 +281,4 @@ def users_template_page(data, index):
 def talk_page_users(data,index):
     return filter_users_pageNS(data, index, 3)
 
-
-############################ MORE METRICS ON USERS (initial ones) #############################################################################
-
-def users_accum(data, index):
-    return (users_new(data, index).cumsum())
-
-
-def users_anonymous_accum(data, index):
-    return (users_new_anonymous(data, index).cumsum())
-
-
-def users_new_registered(data, index):
-    users = data.drop_duplicates('contributor_id')
-    non_anonymous_users = users[users['contributor_name'] != 'Anonymous']
-    series = non_anonymous_users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-def users_new_anonymous(data, index):
-    users = data.drop_duplicates('contributor_id')
-    anonymous_users = users[users['contributor_name'] == 'Anonymous']
-    series = anonymous_users.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-def users_registered_accum(data, index):
-    return (users_new_registered(data, index).cumsum())
-
-########################################################################
-
-# RATIOS
-
-##### Helper functions #####
-
-
-def anonymous_edits(data, index):
-    series = data[data['contributor_name'] == 'Anonymous']
-    series = series.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series
-
-
-##### callable ditribution metrics #####
-
-
-def edits_per_users_accum(data, index):
-    return (edits_accum(data, index) / users_accum(data, index))
-
-
-def edits_per_users_monthly(data, index):
-    return (edits(data, index) / users_active(data, index))
-
-
-def edits_in_articles_per_users_accum(data, index):
-    return (edits_main_content_accum(data, index) / users_accum(data, index))
-
-
-def edits_in_articles_per_users_monthly(data, index):
-    return (edits_main_content(data, index) / users_active(data, index))
-
-
-def edits_per_pages_accum(data, index):
-    return (edits_accum(data, index) / pages_accum(data, index))
-
-
-def edits_per_pages_monthly(data, index):
-    return (edits(data, index) / pages_edited(data, index))
-
-
-def percentage_edits_by_anonymous_monthly(data, index):
-    series_anon_edits = anonymous_edits(data, index)
-    series_total_edits = edits(data, index)
-    series = series_anon_edits / series_total_edits
-    series *= 100 # we want it to be displayed in percentage
-    return series
-
-
-def percentage_edits_by_anonymous_accum(data, index):
-    series_anon_edits_accum = anonymous_edits(data, index).cumsum()
-    series_total_edits_accum = edits_accum(data, index)
-    series = series_anon_edits_accum / series_total_edits_accum
-    series *= 100 # we want it to be displayed in percentage
-    return series
-
-
-########################################################################
-
-# Distribution Of Work
-
-##### Helper functions #####
-
-
-def contributions_per_author(data):
-    """
-    Takes data and outputs data grouped by its author
-    """
-    return data.groupby('contributor_id').size()
-
-
-def calc_ratio_percentile_max(data, index, percentile, minimal_users):
-    return calc_ratio_percentile(data, index, 1, percentile, minimal_users)
-
-
-def calc_ratio_percentile(data, index, top_percentile, percentile, minimal_users):
-
-    # Note that contributions is an *unsorted* list of contributions per author
-    def ratio_max_percentile_for_period(contributions, percentage):
-
-        position = int(n_users * percentage)
-
-        # get top users until user who corresponds to percentil n
-        top_users = contributions.nlargest(position)
-
-        # get top user and percentil n user
-        p_max = top_users[top_percentile-1]
-        percentile = top_users[-1]
-
-        # calculate ratio between percentiles
-        return p_max / percentile
-
-    percentage = percentile * 0.01
-    i = 0
-    monthly_data = data.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    result = pd.Series(index=monthly_data.size().index)
-    indices = result.index
-    accum_data = pd.DataFrame()
-    for name, group in monthly_data:
-        # Accumulate data so far
-        accum_data = accum_data.append(group)
-
-        # Get contributions per contributor
-        contributions = contributions_per_author(accum_data)
-
-        n_users = len(contributions)
-
-        # Skip when the wiki has too few users
-        if n_users < minimal_users:
-            result[indices[i]] = np.NaN
-        else:
-            result[indices[i]] = ratio_max_percentile_for_period(contributions, percentage)
-        i = i + 1
-
-    return result
-
-##### callable ditribution metrics #####
-
-
-def gini_accum(data, index):
-
-    def gini_coeff(values):
-        """
-        Extracted from wikixray/graphics.py:70
-        Plots a GINI graph for author contributions
-
-        @type  values: list of ints
-        @param values: list of integers summarizing total contributions for each registered author
-        """
-
-        n_users = len(values) # n_users => n + 1
-        if (n_users) < MINIMAL_USERS_GINI:
-            return np.NaN
-
-        sum_numerator=0
-        sum_denominator=0
-        for i in range(1, n_users):
-            sum_numerator += (n_users-i) * values[i]
-            sum_denominator += values[i]
-        if sum_denominator == 0:
-            return np.NaN
-        ## Apply math function for the Gini coefficient
-        g_coeff = n_users-2*(sum_numerator/sum_denominator)
-        ## Now, apply Deltas, 2003 correction for small datasets:
-        g_coeff *= (1.0 / (n_users - 2))
-        return g_coeff
-
-    #~ data = raw_data.set_index([raw_data['timestamp'].dt.to_period('M'), raw_data.index])
-    monthly_data = data.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    if index is not None:
-        gini_accum_df = pd.Series(index=index)
-    else:
-        gini_accum_df = pd.Series(index=monthly_data.size().index)
-    indices = gini_accum_df.index
-    i = 0
-    accum_data = pd.DataFrame()
-    for name, group in monthly_data:
-        # Accumulate data so far
-        accum_data = accum_data.append(group)
-
-        # Get contributions per contributor, sort them
-        #   and make it a list to call to gini_coeff()
-        values = contributions_per_author(accum_data) \
-                .sort_values(ascending=True) \
-                .tolist()
-        gini_accum_df[indices[i]] = gini_coeff(values)
-        i = i + 1
-
-    return gini_accum_df
-
-
-def ratio_percentiles_max_5(data, index):
-    return calc_ratio_percentile_max(data,index, 5,
-                    MINIMAL_USERS_PERCENTIL_MAX_5)
-
-
-def ratio_percentiles_max_10(data, index):
-    return calc_ratio_percentile_max(data, index, 10,
-                    MINIMAL_USERS_PERCENTIL_MAX_10)
-
-
-def ratio_percentiles_max_20(data, index):
-    return calc_ratio_percentile_max(data, index, 20,
-                    MINIMAL_USERS_PERCENTIL_MAX_20)
-
-
-def ratio_percentiles_5_10(data, index):
-    return calc_ratio_percentile(data, index, 5, 10,
-                    MINIMAL_USERS_PERCENTIL_5_10)
-
-
-def ratio_percentiles_10_20(data, index):
-    return calc_ratio_percentile(data, index, 10, 20,
-                    MINIMAL_USERS_PERCENTIL_10_20)
-
-
-def ratio_10_90(data, index):
-
-    # contributions is a *sorted* list of contributions per author
-    #   in an descending order (from most contributions to less contributions)
-    def ratio_top_rest_for_period(contributions, percentage_top):
-        top_percent_users = math.ceil(n_users * percentage_top);
-        #~ rest_users = floor(n_users * (1 - percentage_top));
-        edits_top = contributions[:top_percent_users].sum()
-        edits_rest = contributions[top_percent_users:].sum()
-
-        return edits_top / edits_rest
-
-
-    percentage = 10 * 0.01
-    i = 0
-    monthly_data = data.groupby(pd.Grouper(key='timestamp', freq='MS'))
-    result = pd.Series(index=monthly_data.size().index)
-    indices = result.index
-    accum_data = pd.DataFrame()
-    for name, group in monthly_data:
-        # Get contributions per contributor, sort them
-        #   and make it a Python list
-        accum_data = accum_data.append(group)
-        contributions = contributions_per_author(accum_data) \
-                .sort_values(ascending=False)
-
-        n_users = len(contributions)
-
-        # Skip when the wiki has too few users
-        if n_users < MINIMAL_USERS_RATIO_10_90:
-            result[indices[i]] = np.NaN
-        else:
-            result[indices[i]] = ratio_top_rest_for_period(contributions,
-                                                            percentage)
-        i = i + 1
-
-    return result
 

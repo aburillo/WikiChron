@@ -5,6 +5,8 @@ cache = None;
 
 REDIS_URL = 'redis://localhost:6379'
 
+#No tenemos ni idea de lo que hace esto
+
 def set_up_cache(app, debug):
     global cache;
 
