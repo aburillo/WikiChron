@@ -42,6 +42,7 @@ def extract_metrics_objs_from_metrics_codes(metric_codes):
 
 @cache.memoize(timeout=3600)
 def load_data(wiki):
+    print(wiki)
     df = lib.get_dataframe_from_csv(wiki['data'])
     lib.prepare_data(df)
     df = clean_up_bot_activity(df, wiki)

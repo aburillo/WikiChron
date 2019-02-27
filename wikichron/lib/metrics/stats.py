@@ -181,7 +181,7 @@ def filter_users_last_edition(data, index, x):
     return series
 
 
-<<<<<<< HEAD
+#<<<<<<< HEAD
 #### Helper metric 5 ####
 
 # this helper functions filters the editors according to their number of editions, which can be in a range: [x, y] or >=x, with x and y specified by the caller functions
@@ -219,7 +219,7 @@ def filter_users_pageNS(data, index, page_ns):
 ###### Callable Functions ######
 
 ############################ METRIC 1: USERS NEW AND USERS REINCIDENT ###############################################################
-=======
+#=======
 #this metric is the same as the users_active, but getting rid of anonymous users	
 def users_registered_active(data, index):
     # get rid of anonymous users and procceed as it was done in the previous metric.
@@ -232,7 +232,7 @@ def users_anonymous_active(data, index):
     user_anonymous = data[data['contributor_name'] == 'Anonymous']
     return users_active(user_anonymous, index)
 
->>>>>>> oficial-master
+#>>>>>>> oficial-master
 
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
