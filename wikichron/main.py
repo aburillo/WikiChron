@@ -230,7 +230,7 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg,
             )
         ])
 
-
+#visto y creemos que no necesitamos cambiarlo
     def select_wikis_and_metrics_control(wikis_dropdown_options, metrics_dropdown_options):
         return (html.Div(id='wikis-and-metrics-control',
                         className='selector',
@@ -278,7 +278,7 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg,
                             ],
                         )
                 );
-
+#visto y creemos que no necesitamos cambiarlo
     def select_time_axis_control(init_relative_time):
         return (html.Div([
             html.Div([
@@ -305,7 +305,7 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg,
             )
         );
 
-
+#visto y creemos que no necesitamos cambiarlo
     def date_slider_control():
         return (html.Div(id='date-slider-div', className='container',
                 children=[
@@ -372,7 +372,7 @@ def generate_main_content(wikis_arg, metrics_arg, relative_time_arg,
 
             share_modal('{}/app/{}'.format(url_host, query_string),
                         '{}/download/{}'.format(url_host, query_string)),
-
+#no sabemos para que sirve 
             html.Div(id='initial-selection', style={'display': 'none'}, children=args_selection),
             html.Div(id='signal-data', style={'display': 'none'}),
             html.Div(id='time-axis', style={'display': 'none'}),
@@ -462,6 +462,7 @@ def bind_callbacks(app):
         State('initial-selection', 'children'),
         State('time-axis', 'children')]
     )
+#Hay que cambiarlo
     def update_graphs(ready,
             selected_wikis, selected_metrics, selected_timerange,
             selected_timeaxis, selection_json, time_axis_json):
@@ -613,7 +614,7 @@ def bind_callbacks(app):
                         marks=range_slider_marks,
                     )
                 )
-
+################Vamos por aqui
     @app.callback(
         Output('display-slider-selection', 'children'),
         [Input('dates-slider', 'value')],
