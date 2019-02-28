@@ -120,6 +120,7 @@ else: # load piwik only in production:
 
 
 def get_available_wikis(data_dir):
+    print(os.path.join(data_dir, 'wikis.json'))
     wikis_json_file = open(os.path.join(data_dir, 'wikis.json'))
     wikis = json.load(wikis_json_file)
     return wikis
