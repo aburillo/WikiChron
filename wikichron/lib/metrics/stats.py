@@ -13,6 +13,8 @@
 import pandas as pd
 import numpy as np
 import math
+import datetime as d
+from dateutil.relativedelta import relativedelta
 
 # CONSTANTS
 MINIMAL_USERS_GINI = 20
@@ -125,6 +127,38 @@ def users_active_more_than_x_editions(data, index, x):
     monthly_edits = data.groupby([pd.Grouper(key='timestamp', freq='MS'), 'contributor_name']).size()
     monthly_edits_filtered = monthly_edits[monthly_edits > x].to_frame(name='pages_edited').reset_index()
     series = monthly_edits_filtered.groupby(pd.Grouper(key='timestamp', freq='MS')).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
+#### Helper metric 2 ####
+
+def add_x_months(data, months):
+    return data['timestamp'].apply(lambda x: x + relativedelta(months = +months))
+
+def displace_x_months_per_user(data, months):
+    return data.shift(months)
+
+def current_streak_x_or_y_months_in_a_row(data, index, z, y):
+    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    mothly['add_months'] = add_x_months(mothly, z)
+    lista = ['contributor_id']
+    lista.append('add_months')
+    if y > 0:
+      mothly['add_y_months'] = add_x_months(mothly, y)
+      lista.append('add_y_months')
+    group_users = mothly[lista].groupby(['contributor_id'])
+    displace_z_month = displace_x_months_per_user(group_users['add_months'], z)
+    mothly['displace']= displace_z_month
+    if y > 0:
+      displace_y_month = displace_x_months_per_user(group_users['add_y_months'], y)
+      mothly['displace_y_month']= displace_y_month
+      current_streak = mothly[(mothly['displace'] == mothly['timestamp']) & (mothly['displace_y_month'] != mothly['timestamp'])]
+    elif z == 1:
+      current_streak = mothly[mothly['displace'] != mothly['timestamp']]
+    elif z == 6:
+      current_streak = mothly[mothly['displace'] == mothly['timestamp']]
+    series = current_streak.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
@@ -315,87 +349,21 @@ def users_anonymous_active(data,index):
 ############################ METRIC 2 #################################################################################################
 
 def current_streak_this_month(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_this_month = []
-    current_streak_this_month.append(len(mothly_edits_users.iloc[0,0]))
-    i = 1
-    while i < len(mothly_edits_users):
-        current_month = np.array(mothly_edits_users.iloc[i,0])
-        last_month = np.array(mothly_edits_users.iloc[i-1,0])
-        current_streak_this_month.append(len(np.setdiff1d(current_month, last_month)))
-        i = i +1
-    mothly_edits_users['current_streak_this_month'] = current_streak_this_month
-    series = pd.Series(mothly_edits_users.current_streak_this_month, mothly_edits_users.index.values)
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
+    series = current_streak_x_or_y_months_in_a_row(data, index, 1, 0)
     return series
-
 
 def current_streak_2_or_3_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_2_or_3_months_in_a_row = []
-    current_streak_2_or_3_months_in_a_row.append(0)
-    intersectList = lambda l: set(l[0]) & set(l[1])
-    i=1
-    while i < 3:
-        two_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-1:i+1, 0]))
-        current_streak_2_or_3_months_in_a_row.append(len(two_months_in_a_row))
-        i = i + 1
-    i = 3
-    while i < len(mothly_edits_users):
-        two_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-1:i+1, 0]))
-        month_4 = np.array(mothly_edits_users.iloc[i-3,0])
-        current_streak_2_or_3_months_in_a_row.append(len(two_months_in_a_row.difference(month_4)))
-        i = i + 1
-    mothly_edits_users['current_streak_2_or_3_months_in_a_row'] = current_streak_2_or_3_months_in_a_row
-    series = pd.Series(mothly_edits_users.current_streak_2_or_3_months_in_a_row, mothly_edits_users.index.values)
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
+    series = current_streak_x_or_y_months_in_a_row(data, index, 1, 3)
     return series
-
 
 def current_streak_4_or_6_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_between_4_6_months = []
-    current_streak_between_4_6_months = current_streak_between_4_6_months + [0,0,0]
-    intersectList = lambda l: set(l[0]) & set(l[1]) & set(l[2]) & set(l[3])
-    i=3
-    while i < 6:
-        four_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-3:i+1, 0]))
-        current_streak_between_4_6_months.append(len(four_months_in_a_row))
-        i = i + 1
-    i = 6
-    while i < len(mothly_edits_users):
-        four_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-3:i+1, 0]))
-        month_7 = np.array(mothly_edits_users.iloc[i-6,0])
-        current_streak_between_4_6_months.append(len(four_months_in_a_row.difference(month_7)))
-        i = i + 1
-    mothly_edits_users['current_streak_between_4_6_months'] = current_streak_between_4_6_months
-    series = pd.Series(mothly_edits_users.current_streak_between_4_6_months, mothly_edits_users.index.values)
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
+    series = current_streak_x_or_y_months_in_a_row(data, index, 3, 6)
     return series
-
 
 def current_streak_more_than_six_months_in_a_row(data, index):
-    mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
-    mothly_edits_users = mothly.apply(lambda x: x.contributor_id.unique()).to_frame('edits_users')
-    current_streak_more_6_months = []
-    current_streak_more_6_months = current_streak_more_6_months + [0,0,0,0,0,0]
-    i = 6
-    intersectList = lambda l: set(l[0]) & set(l[1]) & set(l[2]) & set(l[3]) & set(l[4]) & set(l[5]) & set(l[6])
-    while i < len(mothly_edits_users):
-        six_months_in_a_row = intersectList(np.array(mothly_edits_users.iloc[i-6:i+1, 0]))
-        current_streak_more_6_months.append(len(six_months_in_a_row))
-        i = i + 1
-    mothly_edits_users['current_streak_more_6_months'] = current_streak_more_6_months
-    series = pd.Series(mothly_edits_users.current_streak_more_6_months, mothly_edits_users.index.values)
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
+    series = current_streak_x_or_y_months_in_a_row(data, index, 6, 0)
     return series
+
 
 ############################ METRIC 3 #################################################################################################
 
