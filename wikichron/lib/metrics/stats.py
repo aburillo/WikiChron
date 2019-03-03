@@ -214,7 +214,6 @@ def filter_users_last_edition(data, index, x):
     return series
 
 
-#<<<<<<< HEAD
 #### Helper metric 5 ####
 
 # this helper functions filters the editors according to their number of editions, which can be in a range: [x, y] or >=x, with x and y specified by the caller functions
@@ -247,7 +246,7 @@ def filter_users_pageNS(data, index, page_ns):
     # 0) Filter out anonymous users
     data = filter_out_anonymous(data)
     edits_page = data[data['page_ns'] == page_ns]
-    series = edits_page.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
+    series = edits_page.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))['contributor_id'].nunique()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
@@ -256,7 +255,6 @@ def filter_users_pageNS(data, index, page_ns):
 ###### Callable Functions ######
 
 ############################ METRIC 1: USERS NEW AND USERS REINCIDENT ###############################################################
-#=======
 #this metric is the same as the users_active, but getting rid of anonymous users	
 def users_registered_active(data, index):
     # get rid of anonymous users and procceed as it was done in the previous metric.
@@ -269,7 +267,6 @@ def users_anonymous_active(data, index):
     user_anonymous = data[data['contributor_name'] == 'Anonymous']
     return users_active(user_anonymous, index)
 
-#>>>>>>> oficial-master
 
 def users_new(data, index):
     users = data.drop_duplicates('contributor_id')
@@ -303,7 +300,6 @@ def users_reincident(data, index):
 ############################ METRIC 2 #################################################################################################
 
 def current_streak_this_month(data, index):
-<<<<<<< HEAD
     # 0) Filter out anonymous users
     data = filter_out_anonymous(data)
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
@@ -320,13 +316,10 @@ def current_streak_this_month(data, index):
     series = pd.Series(mothly_edits_users.current_streak_this_month, mothly_edits_users.index.values)
     if index is not None:
         series = series.reindex(index, fill_value=0)
-=======
     series = current_streak_x_or_y_months_in_a_row(data, index, 1, 0)
->>>>>>> 0dfec1c3a48eda796b5eed63865b363a17f67882
     return series
 
 def current_streak_2_or_3_months_in_a_row(data, index):
-<<<<<<< HEAD
     # 0) Filter out anonymous users
     data = filter_out_anonymous(data)
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
@@ -349,13 +342,10 @@ def current_streak_2_or_3_months_in_a_row(data, index):
     series = pd.Series(mothly_edits_users.current_streak_2_or_3_months_in_a_row, mothly_edits_users.index.values)
     if index is not None:
         series = series.reindex(index, fill_value=0)
-=======
     series = current_streak_x_or_y_months_in_a_row(data, index, 1, 3)
->>>>>>> 0dfec1c3a48eda796b5eed63865b363a17f67882
     return series
 
 def current_streak_4_or_6_months_in_a_row(data, index):
-<<<<<<< HEAD
     # 0) Filter out anonymous users
     data = filter_out_anonymous(data)
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
@@ -378,13 +368,10 @@ def current_streak_4_or_6_months_in_a_row(data, index):
     series = pd.Series(mothly_edits_users.current_streak_between_4_6_months, mothly_edits_users.index.values)
     if index is not None:
         series = series.reindex(index, fill_value=0)
-=======
     series = current_streak_x_or_y_months_in_a_row(data, index, 3, 6)
->>>>>>> 0dfec1c3a48eda796b5eed63865b363a17f67882
     return series
 
 def current_streak_more_than_six_months_in_a_row(data, index):
-<<<<<<< HEAD
     # 0) Filter out anonymous users
     data = filter_out_anonymous(data)
     mothly = data.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))
@@ -401,9 +388,7 @@ def current_streak_more_than_six_months_in_a_row(data, index):
     series = pd.Series(mothly_edits_users.current_streak_more_6_months, mothly_edits_users.index.values)
     if index is not None:
         series = series.reindex(index, fill_value=0)
-=======
     series = current_streak_x_or_y_months_in_a_row(data, index, 6, 0)
->>>>>>> 0dfec1c3a48eda796b5eed63865b363a17f67882
     return series
 
 
@@ -515,15 +500,15 @@ def surviving_new_editor(data, index):
 
 ############################ METRICS 9 and 10 #################################################################################################
 
-#this metric counts the number of main page editions
+#this metric counts the number of users that have edited a main page
 def users_main_page(data, index):
   return filter_users_pageNS(data, index, 0)
 
-#this metric counts the number of template page editions
+#this metric counts the number of users that have edited a template page
 def users_template_page(data, index):
    return filter_users_pageNS(data, index, 10)
 
-#this metric counts the number of talk page editions
+#this metric counts the number of users that have edited a talk page
 def talk_page_users(data,index):
     return filter_users_pageNS(data, index, 3)
 

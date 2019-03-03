@@ -77,23 +77,17 @@ def generate_metrics():
     metrics.append(Metric('users_new_anonymous', 'New anonymous users', MetricCategory.USERS, stats.users_new_anonymous, 'Anonymous users who made at least one edition grouped by the month they did their first edit. Anonymous are identified by their ip.'))
 
     #users active 
-<<<<<<< HEAD
     metrics.append(Metric('users_active', 'Active users', MetricCategory.USERS, stats.users_active, 'Number of users per month who have made at least one edition.'))
     metrics.append(Metric('users_active_registered', 'Active registered users', MetricCategory.USERS, stats.users_registered_active, 'registered users who have made at least one edition.'))
-=======
     metrics.append(Metric('users_active', 'Active users', MetricCategory.USERS, stats.users_active, 'Number of users who have made at least one contribution for each month.'))
-#<<<<<<< HEAD
     metrics.append(Metric('users_active_registered', 'Active registered users', MetricCategory.USERS, stats.users_registered_active, 'New registered users who have made at least one edition.'))
->>>>>>> 0dfec1c3a48eda796b5eed63865b363a17f67882
     metrics.append(Metric('users_active_anonymous', 'Active anonymous users', MetricCategory.USERS, stats.users_anonymous_active, 'New users who have made at least one edition.'))
     metrics.append(Metric('users_registered_active_>4_edits', 'users >4 edits 1', MetricCategory.USERS, stats.users_registered_active_2, 'Registered users distributed by the month(s) in which they have made more than 4 editions'))
     metrics.append(Metric('users_active_more_than_4', 'users >4 edits 2', MetricCategory.USERS, stats.users_active_more_than_4, 'users (anonymous and registered) distributed by the month(s) in which they have made more than 4 editions'))
 
     #total users (registered & anonymous)
-#=======
     metrics.append(Metric('users_active_registered', 'Active registered users', MetricCategory.USERS, stats.users_registered_active, 'Number of registered users who have made at least one contribution for each month.'))
     metrics.append(Metric('users_active_anonymous', 'Active anonymous users', MetricCategory.USERS, stats.users_anonymous_active, 'Number of anonymous users who have made at least one contribution for each month.'))
-#>>>>>>> oficial-master
     metrics.append(Metric('users_accum', 'Total users', MetricCategory.USERS, stats.users_accum, 'Users who have made at least one edition accumulated at every month.'))
     metrics.append(Metric('users_registered_accum', 'Total registered users', MetricCategory.USERS, stats.users_registered_accum, 'Total registered users at every month. Note that users have to have made at least one edition and they have to be logged with their account when they did that edition.'))
     metrics.append(Metric('users_anonymous_accum', 'Total anonymous users', MetricCategory.USERS, stats.users_anonymous_accum, 'Anonymous users who have made at least one edition accumulated at every month. Anonymous are identified by their ip'))
