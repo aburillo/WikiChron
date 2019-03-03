@@ -1,0 +1,2 @@
+Para que sirve el cache.py
+Y porque los archivos llevan __ (__main__, __init__)
