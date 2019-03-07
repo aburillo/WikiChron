@@ -31,7 +31,7 @@ global debug;
 debug = True if os.environ.get('FLASK_ENV') == 'development' else False
 
 global metric_categories_order;
-metric_categories_order = [MetricCategory.PAGES, MetricCategory.EDITIONS, MetricCategory.USERS, MetricCategory.RATIOS, MetricCategory.DISTRIBUTION]
+metric_categories_order = [MetricCategory.USERS]
 category_names = ['USERS']
 
 wikis_categories_order = ['SMALL', 'MEDIUM', 'LARGE', 'VERY LARGE']
@@ -343,7 +343,7 @@ def bind_callbacks(app):
         metrics_selection = list(itertools.chain.from_iterable(metrics_selection_l)) # reduce a list of lists into one list.
         wikis_selection = wikis_selection_large + wikis_selection_big + wikis_selection_medium + wikis_selection_small
         print ('User selection: {} {}'.format(wikis_selection, metrics_selection))
-        if wikis_selection and metrics_selection:
+        if (len(wikis_selection) == 1) and metrics_selection:
             return False
         else:
             return True

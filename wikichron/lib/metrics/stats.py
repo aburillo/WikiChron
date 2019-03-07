@@ -229,6 +229,11 @@ def users_first_edit_between_4_6_months_ago(data, index):
 def users_first_edit_more_than_6_months_ago(data, index):
     return filter_users_first_edition(data, index, 7, 0)
 
+def users_first_edit(data, index):
+    one_three = users_first_edit_between_1_3_months_ago(data, index)
+    four_six = users_first_edit_between_4_6_months_ago(data, index)
+    more_six = users_first_edit_more_than_6_months_ago(data, index)
+    return [one_three, four_six, more_six]
 ############################ METRIC 4 #################################################################################################
 
 # This metric counts, among the users that have edited in that month X, the ones that have edited the last time in month X-1

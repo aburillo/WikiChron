@@ -42,7 +42,7 @@ def extract_metrics_objs_from_metrics_codes(metric_codes):
 #No cambiada (devuelve el dataframe limpio)
 @cache.memoize(timeout=3600)
 def load_data(wiki):
-    print(wiki)
+    print(wiki['data'])
     df = lib.get_dataframe_from_csv(wiki['data']) #carga el csv
     lib.prepare_data(df) #ordena el dataframe
     df = clean_up_bot_activity(df, wiki) #elimina los bots
@@ -63,16 +63,16 @@ def compute_data(dataframes, metrics):
     #~ if not relative_time: # natural time index
         #~ return [ lib.compute_metric_on_dataframes(metric, dataframes) for metric in metrics]
     #~ else: # relative time index
-    metrics_by_wiki = []
+    #metrics_by_wiki = []
     #por cada wiki te hace el calculo de las metricas seleccionadas y lo mete en una lista.
-    for df in dataframes:
-        metrics_by_wiki.append(lib.compute_metrics_on_dataframe(metrics, df))
-
+    #for df in dataframes:
+     #   metrics_by_wiki.append(lib.compute_metrics_on_dataframe(metrics, df))
+    wiki_by_metrics = lib.compute_metrics_on_dataframe(metrics, dataframes)
     # transposing matrix row=>wikis, column=>metrics to row=>metrics, column=>wikis
-    wiki_by_metrics = []
+    '''wiki_by_metrics = []
     for metric_idx in range(len(metrics)):
         metric_row = [metrics_by_wiki[wiki_idx].pop(0) for wiki_idx in range(len(metrics_by_wiki))]
-        wiki_by_metrics.append(metric_row)
+        wiki_by_metrics.append(metric_row)'''
 
     return wiki_by_metrics
 
@@ -83,10 +83,11 @@ def load_and_compute_data(wikis, metrics):
 
     # load data from csvs:
     time_start_loading_csvs = time.perf_counter()
-    wikis_df = []
-    for wiki in wikis:
+    #wikis_df = []
+    '''for wiki in wikis:
         df = load_data(wiki)
-        wikis_df.append(df)
+        wikis_df.append(df)'''
+    wikis_df = load_data(wikis[0])
     time_end_loading_csvs = time.perf_counter() - time_start_loading_csvs
     print(' * [Timing] Loading csvs : {} seconds'.format(time_end_loading_csvs) )
 
@@ -123,9 +124,15 @@ def generate_longest_time_axis(list_of_selected_wikis, relative_time):
 def generate_graphs(data, metrics, wikis, relative_time):
     """ Turn over data[] into plotly graphs objects and store it in graphs[] """
     #el bucle de la i es el externo y el de la j el interno.
-    graphs_list = [[None for j in range(len(wikis))] for i in range(len(metrics))]
-
+    #num_parts_metric = len(data[metric_idx])
+    #graphs_list = [[None for j in range(num_parts_metric)] for i in range(len(metrics))]
+    graphs_list = []
     for metric_idx in range(len(metrics)):
+        graphs_list.append([])
+        num_parts_metric = len(data[metric_idx])
+        for part_metric in range(num_parts_metric):
+            graphs_list[metric_idx].append(None)
+    '''for metric_idx in range(len(metrics)):
         for wiki_idx in range(len(wikis)):
             metric_data = data[metric_idx][wiki_idx]
             if relative_time:
@@ -137,8 +144,20 @@ def generate_graphs(data, metrics, wikis, relative_time):
                                 x=x_axis,
                                 y=metric_data,
                                 name=wikis[wiki_idx]['name']
+                                )'''
+    for metric_idx in range(len(metrics)):
+        num_parts_metric = len(data[metric_idx])
+        for part_metric in range(num_parts_metric):
+            metric_data = data[metric_idx][part_metric]
+            if relative_time:
+                x_axis = list(range(len(metric_data.index))) # relative to the age of the wiki in months
+            else:
+                x_axis = metric_data.index # natural months
+            graphs_list[metric_idx][part_metric] = go.Bar(
+                                x=x_axis,
+                                y=metric_data
+                                #name=wikis[wiki_idx]['name']
                                 )
-
     return graphs_list
 
 
@@ -529,6 +548,7 @@ def bind_callbacks(app):
                             'data': new_graphs[i],
                             'layout': {
                                 'title': metric.text,
+                                'barmode': 'stack',
                                 'xaxis': {'range': new_timerange }
                             }
                         },
