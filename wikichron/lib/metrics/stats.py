@@ -38,6 +38,38 @@ def users_active_more_than_x_editions(data, index, x):
         series = series.reindex(index, fill_value=0)
     return series
 
+#### Helper metric 2 ####
+
+def add_x_months(data, months):
+    return data['timestamp'].apply(lambda x: x + relativedelta(months = +months))
+
+def displace_x_months_per_user(data, months):
+    return data.shift(months)
+
+def current_streak_x_or_y_months_in_a_row(data, index, z, y):
+    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    mothly['add_months'] = add_x_months(mothly, z)
+    lista = ['contributor_id']
+    lista.append('add_months')
+    if y > 0:
+      mothly['add_y_months'] = add_x_months(mothly, y)
+      lista.append('add_y_months')
+    group_users = mothly[lista].groupby(['contributor_id'])
+    displace_z_month = displace_x_months_per_user(group_users['add_months'], z)
+    mothly['displace']= displace_z_month
+    if y > 0:
+      displace_y_month = displace_x_months_per_user(group_users['add_y_months'], y)
+      mothly['displace_y_month']= displace_y_month
+      current_streak = mothly[(mothly['displace'] == mothly['timestamp']) & (mothly['displace_y_month'] != mothly['timestamp'])]
+    elif z == 1:
+      current_streak = mothly[mothly['displace'] != mothly['timestamp']]
+    elif z == 6:
+      current_streak = mothly[mothly['displace'] == mothly['timestamp']]
+    series = current_streak.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
+    if index is not None:
+        series = series.reindex(index, fill_value=0)
+    return series
+
 
 #### Helper metric 3 ####
 
@@ -119,7 +151,7 @@ def filter_users_number_of_edits(data, index, x, y):
 # this helper function gets the number of users that have edited a particular kind of page, specified by the parameter page_ns
 def filter_users_pageNS(data, index, page_ns):
     edits_page = data[data['page_ns'] == page_ns]
-    series = edits_page.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
+    series = edits_page.groupby(pd.Grouper(key = 'timestamp', freq = 'MS'))['contributor_id'].nunique()
     if index is not None:
         series = series.reindex(index, fill_value=0)
     return series
@@ -152,14 +184,10 @@ def users_reincident(data, index):
 
 
 ############################ METRIC 2 #################################################################################################
-def add_x_months(data, months):
-    return data['timestamp'].apply(lambda x: x + relativedelta(months = +months))
 
-def displace_x_months(data, months):
-    return data.shift(months)
-	
 def current_streak_this_month(data, index):
-    mothly = data.groupby(['contributor_id', pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    return current_streak_x_or_y_months_in_a_row(data, index, 1, 0)
+    '''mothly = data.groupby(['contributor_id', pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
     mothly['add_one_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +1))
     group_users = mothly[['contributor_id', 'add_one_month']].groupby(['contributor_id'])
     displace_a_month = group_users['add_one_month'].shift()
@@ -168,11 +196,12 @@ def current_streak_this_month(data, index):
     series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
-    return series
+    return series'''
 
 
 def current_streak_2_or_3_months_in_a_row(data, index):
-    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    return current_streak_x_or_y_months_in_a_row(data, index, 1, 3)
+    '''mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
     mothly['add_one_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +1))
     mothly['add_three_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +3))
     group_users = mothly[['contributor_id', 'add_one_month', 'add_three_month']].groupby(['contributor_id'])
@@ -184,11 +213,12 @@ def current_streak_2_or_3_months_in_a_row(data, index):
     series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
-    return series
+    return series'''
 
 
 def current_streak_4_or_6_months_in_a_row(data, index):
-    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    return current_streak_x_or_y_months_in_a_row(data, index, 3, 6)
+    '''mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
     mothly['add_three_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +3))
     mothly['add_six_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +6))
     group_users = mothly[['contributor_id', 'add_three_month', 'add_six_month']].groupby(['contributor_id'])
@@ -200,11 +230,12 @@ def current_streak_4_or_6_months_in_a_row(data, index):
     series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
-    return series
+    return series'''
 
 
 def current_streak_more_than_six_months_in_a_row(data, index):
-    mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
+    return current_streak_x_or_y_months_in_a_row(data, index, 6, 0)
+    '''mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
     mothly['add_six_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +6))
     group_users = mothly[['contributor_id', 'add_six_month']].groupby(['contributor_id'])
     displace_six_month = group_users['add_six_month'].shift(6)
@@ -213,7 +244,18 @@ def current_streak_more_than_six_months_in_a_row(data, index):
     series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
     if index is not None:
         series = series.reindex(index, fill_value=0)
-    return series
+    return series'''
+
+def current_streak(data, index):
+    this_month = current_streak_this_month(data, index)
+    two_three_months = current_streak_2_or_3_months_in_a_row(data, index)
+    four_six_months = current_streak_4_or_6_months_in_a_row(data, index)
+    more_six = current_streak_more_than_six_months_in_a_row(data, index)
+    this_month.name = 'this months'
+    two_three_months.name = 'between two and three months in a row'
+    four_six_months.name = 'between four and six months in a row'
+    more_six.name = 'more than six months in a row'
+    return [this_month, two_three_months, four_six_months, more_six]
 
 ############################ METRIC 3 #################################################################################################
 
@@ -233,6 +275,9 @@ def users_first_edit(data, index):
     one_three = users_first_edit_between_1_3_months_ago(data, index)
     four_six = users_first_edit_between_4_6_months_ago(data, index)
     more_six = users_first_edit_more_than_6_months_ago(data, index)
+    one_three.name = 'between 1 and 3 months'
+    four_six.name = 'between 4 and 6 months'
+    more_six.name = 'more than 6 months'
     return [one_three, four_six, more_six]
 ############################ METRIC 4 #################################################################################################
 
@@ -252,6 +297,16 @@ def users_last_edit_4_or_5_or_6_months_ago(data, index):
 def users_last_edit_more_than_6_months_ago(data, index):
     return filter_users_last_edition(data, index, 6)
 
+def users_last_edit(data, index):
+    one_month = users_last_edit_1_month_ago(data, index)
+    two_three_months = users_last_edit_2_or_3_months_ago(data, index)
+    four_six_months = users_last_edit_4_or_5_or_6_months_ago(data, index)
+    more_six_months = users_last_edit_more_than_6_months_ago(data, index)
+    one_month.name = '1 month ago'
+    two_three_months.name = 'between 2 and 3 months ago'
+    four_six_months.name = 'between 4 and 6 months ago'
+    more_six_months.name = 'more than six months ago'
+    return [one_month, two_three_months, four_six_months, more_six_months]
 
 ############################ METRIC 5 #################################################################################################
 
@@ -271,7 +326,16 @@ def users_number_of_edits_between_25_and_99(data, index):
 def users_number_of_edits_highEq_100(data, index):
     return filter_users_number_of_edits(data, index, 100, 0)
 
-
+def users_number_of_edits(data, index):
+    one_four = users_number_of_edits_between_1_and_4(data, index)
+    between_5_24 = users_number_of_edits_between_5_and_24(data, index)
+    between_25_99 = users_number_of_edits_between_25_and_99(data, index)
+    highEq_100 = users_number_of_edits_highEq_100(data, index)
+    one_four.name = 'between 1 and 4'
+    between_5_24.name = 'between 5 and 24'
+    between_25_99.name = 'between 25 and 99'
+    highEq_100.name = 'more than 100'
+    return [one_four, between_5_24, between_25_99, highEq_100]
 ############################ METRICS 9 and 10 #################################################################################################
 
 #this metric filters how many users have edited a main page
@@ -286,4 +350,11 @@ def users_template_page(data, index):
 def talk_page_users(data,index):
     return filter_users_pageNS(data, index, 3)
 
-
+def type_page_users_edit(data, index):
+    main_page = users_main_page(data, index)
+    template_page = users_template_page(data, index)
+    talk_page = talk_page_users(data,index)
+    main_page.name = 'main_page'
+    template_page.name = 'template_page'
+    talk_page.name = 'talk_page'
+    return [main_page, template_page, talk_page]

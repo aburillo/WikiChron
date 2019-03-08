@@ -42,7 +42,6 @@ def extract_metrics_objs_from_metrics_codes(metric_codes):
 #No cambiada (devuelve el dataframe limpio)
 @cache.memoize(timeout=3600)
 def load_data(wiki):
-    print(wiki['data'])
     df = lib.get_dataframe_from_csv(wiki['data']) #carga el csv
     lib.prepare_data(df) #ordena el dataframe
     df = clean_up_bot_activity(df, wiki) #elimina los bots
@@ -155,8 +154,8 @@ def generate_graphs(data, metrics, wikis, relative_time):
                 x_axis = metric_data.index # natural months
             graphs_list[metric_idx][part_metric] = go.Bar(
                                 x=x_axis,
-                                y=metric_data
-                                #name=wikis[wiki_idx]['name']
+                                y=metric_data,
+                                name=metric_data.name
                                 )
     return graphs_list
 
