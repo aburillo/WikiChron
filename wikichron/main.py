@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-   main.py
+   main.py esto es el main
 
    Descp: Generate the main content of the webapp:
 Title, plots and filter elements.
