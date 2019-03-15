@@ -187,64 +187,21 @@ def users_reincident(data, index):
 
 def current_streak_this_month(data, index):
     return current_streak_x_or_y_months_in_a_row(data, index, 1, 0)
-    '''mothly = data.groupby(['contributor_id', pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
-    mothly['add_one_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +1))
-    group_users = mothly[['contributor_id', 'add_one_month']].groupby(['contributor_id'])
-    displace_a_month = group_users['add_one_month'].shift()
-    mothly['displace']= displace_a_month
-    streak_start_this_month = mothly[mothly['displace'] != mothly['timestamp']]
-    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series'''
-
+    
 
 def current_streak_2_or_3_months_in_a_row(data, index):
     return current_streak_x_or_y_months_in_a_row(data, index, 1, 3)
-    '''mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
-    mothly['add_one_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +1))
-    mothly['add_three_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +3))
-    group_users = mothly[['contributor_id', 'add_one_month', 'add_three_month']].groupby(['contributor_id'])
-    displace_a_month = group_users['add_one_month'].shift()
-    displace_three_month = group_users['add_three_month'].shift(3)
-    mothly['displace_one_month']= displace_a_month
-    mothly['displace_three_month']= displace_three_month
-    streak_start_this_month = mothly[(mothly['displace_one_month'] == mothly['timestamp']) & (mothly['displace_three_month'] != mothly['timestamp'])]
-    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series'''
+    
 
 
 def current_streak_4_or_6_months_in_a_row(data, index):
     return current_streak_x_or_y_months_in_a_row(data, index, 3, 6)
-    '''mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
-    mothly['add_three_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +3))
-    mothly['add_six_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +6))
-    group_users = mothly[['contributor_id', 'add_three_month', 'add_six_month']].groupby(['contributor_id'])
-    displace_three_month = group_users['add_three_month'].shift(3)
-    displace_six_month = group_users['add_six_month'].shift(6)
-    mothly['displace_three_month']= displace_three_month
-    mothly['displace_six_month']= displace_six_month
-    streak_start_this_month = mothly[(mothly['displace_three_month'] == mothly['timestamp']) & (mothly['displace_six_month'] != mothly['timestamp'])]
-    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series'''
+    
 
 
 def current_streak_more_than_six_months_in_a_row(data, index):
     return current_streak_x_or_y_months_in_a_row(data, index, 6, 0)
-    '''mothly = data.groupby(['contributor_id',pd.Grouper(key = 'timestamp', freq = 'MS')]).size().to_frame('prueba').reset_index()
-    mothly['add_six_month'] = mothly['timestamp'].apply(lambda x: x + relativedelta(months = +6))
-    group_users = mothly[['contributor_id', 'add_six_month']].groupby(['contributor_id'])
-    displace_six_month = group_users['add_six_month'].shift(6)
-    mothly['displace_six_month']= displace_six_month
-    streak_start_this_month = mothly[mothly['displace_six_month'] == mothly['timestamp']]
-    series = streak_start_this_month.groupby(pd.Grouper(key = 'timestamp', freq = 'MS')).size()
-    if index is not None:
-        series = series.reindex(index, fill_value=0)
-    return series'''
+    
 
 def current_streak(data, index):
     this_month = current_streak_this_month(data, index)

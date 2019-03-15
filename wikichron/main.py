@@ -39,6 +39,11 @@ def extract_metrics_objs_from_metrics_codes(metric_codes):
     metrics = [ lib.metrics_dict[metric] for metric in metric_codes ]
     return metrics
 
+def update_data(data):
+    global loaded_data
+    loaded_data = data
+
+
 #No cambiada (devuelve el dataframe limpio)
 @cache.memoize(timeout=3600)
 def load_data(wiki):
@@ -100,7 +105,7 @@ def load_and_compute_data(wikis, metrics):
 
 #vista y hay que cambiar la parte de la union de los indices.
 @cache.memoize()
-def generate_longest_time_axis(list_of_selected_wikis, relative_time):
+def generate_longest_time_axis(wiki, relative_time):
     """ Generate time axis index of the oldest wiki """
 
     # Make the union of the Datetime indices of every wiki.
@@ -109,9 +114,10 @@ def generate_longest_time_axis(list_of_selected_wikis, relative_time):
     # Otherwise, wikis lifespan for different dates which are not
     #  contained in the lifespan of the oldest wiki would be lost
     #coge el index de cada wiki y los une. 
-    unified_datetime_index = functools.reduce(
+    '''unified_datetime_index = functools.reduce(
                             lambda index_1, index_2: index_1.union(index_2),
-                            map(lambda wiki: wiki.index, list_of_selected_wikis))
+                            map(lambda wiki: wiki.index, list_of_selected_wikis))'''
+    unified_datetime_index = wiki.index
     #te lo muestra desde el nacimiento de la wiki del 0 a n o por fechas
     if relative_time:
         time_axis = list(range(0, len(unified_datetime_index)))
@@ -416,6 +422,7 @@ def bind_callbacks(app):
         print( '\t for the following wikis: {}'.format( wikis_names ))
         print( '\tof the following metrics: {}'.format( metric_names ))
         data = load_and_compute_data(wikis, metrics)
+        update_data(data)
         print('<-- Done retrieving and computing data!')
         return True
 
@@ -434,14 +441,15 @@ def bind_callbacks(app):
         relative_time = selected_timeaxis == 'relative'
 
         # get wikis x metrics selection
-        selection = json.loads(selection_json)
+        '''selection = json.loads(selection_json)
         wikis = selection['wikis']
-        metrics = extract_metrics_objs_from_metrics_codes(selection['metrics'])
+        metrics = extract_metrics_objs_from_metrics_codes(selection['metrics'])'''
 
-        data = load_and_compute_data(wikis, metrics)
+        #data = load_and_compute_data(wikis, metrics)
+        data = loaded_data
 
         # get time axis of the oldest one and use it as base numbers for the slider:
-        time_axis_index = generate_longest_time_axis([ wiki for wiki in data[0] ],
+        time_axis_index = generate_longest_time_axis(data[0][0],
                                                     relative_time)
 
         if relative_time:
@@ -493,7 +501,8 @@ def bind_callbacks(app):
         wikis = selection['wikis']
         metrics = extract_metrics_objs_from_metrics_codes(selection['metrics'])
 
-        data = load_and_compute_data(wikis, metrics)
+        #data = load_and_compute_data(wikis, metrics)
+        data = loaded_data
 
         if debug:
             print('Updating graphs. Selection: [{}, {}, {}, {}]'.format(selected_wikis, selected_metrics, selected_timerange, selected_timeaxis))
