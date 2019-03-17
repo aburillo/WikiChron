@@ -415,7 +415,6 @@ def bind_callbacks(app):
         selection = json.loads(selection_json)
         wikis = selection['wikis']
         metrics = extract_metrics_objs_from_metrics_codes(selection['metrics'])
-
         metric_names = [metric.text for metric in metrics]
         wikis_names = [wiki['name'] for wiki in wikis]
         print('--> Retrieving and computing data')

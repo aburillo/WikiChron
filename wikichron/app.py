@@ -355,9 +355,9 @@ def start_download_data_server():
             return 'Nothing to download!'
 
         (wikis, metrics) = extract_wikis_and_metrics_from_selection_dict(selection)
-
-        data = main.load_and_compute_data(wikis, metrics)
-
+       
+        #data = main.load_and_compute_data(wikis, metrics)
+        data = main.loaded_data
         # output in-memory zip file
         in_memory_zip = BytesIO()
         zipfile_ob = zipfile.ZipFile(in_memory_zip, mode='w',
@@ -367,22 +367,22 @@ def start_download_data_server():
         #   each metric.
         # Then, generate a csv for that DataFrame and append it to the output zip file
         # Remember this is the structure of data: data[metric][wiki]
-        for wiki_idx in range(len(data[0])):
-
+        for metric, metric_name in zip(data, metrics):
             # These two following lines are equivalent to the other next 3 lines
             #   but they are, probably, more difficult to understand and
             #  to maintain, although probably more pandas-ish:
             #~ metrics_data_for_this_wiki = [metric[wiki_idx] for metric in data ]
             #~ wiki_df = pd.concat(metrics_data_for_this_wiki, axis=1)
 
-            wiki_df = pd.DataFrame()
-            for metric in data:
+            metric_df = pd.DataFrame()
+            for submetric in metric:
                 # assign the name of the metric as the name of the column for its data:
-                wiki_df[metric[wiki_idx].name] = metric[wiki_idx]
-
-            csv_str = wiki_df.to_csv()
+                metric_df[submetric.name] = submetric
+            print(metric_df)
+            csv_str = metric_df.to_csv()
+            print(csv_str)
             # append dataframe csv to zip file with name of the wiki:
-            zipfile_ob.writestr('{}.csv'.format(wikis[wiki_idx]['name']), csv_str)
+            zipfile_ob.writestr('{}.csv'.format(metric_name.text), csv_str)
 
         # testing zip format and integrity
         error = zipfile_ob.testzip()
@@ -390,7 +390,7 @@ def start_download_data_server():
             zipfile_ob.close()
             in_memory_zip.seek(0) # move ByteIO cursor to the start
             return flask.send_file(in_memory_zip, as_attachment=True,
-                        attachment_filename='computed_data.zip',
+                        attachment_filename='{}.zip'.format(wikis[0]['name']),
                         mimetype='application/zip')
         else:
             zipfile_ob.close()
